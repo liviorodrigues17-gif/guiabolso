@@ -1949,60 +1949,40 @@ function verificarVencimentos() {
     }
 }
 
-// =======================================================
-// 🚀 INICIALIZAÇÃO FINAL
-// =======================================================
-
 const SENHA_SECRETA = "Loloelili12#";
 
-// inicia firebase/notificações
-iniciarApp();
-iniciarNotificacoes();
-
-// se já estiver logado, esconde a tela
-if (sessionStorage.getItem('acessoGarantido') === 'true') {
-    document.getElementById('loginOverlay').style.display = 'none';
-}
-
-function verificarAcesso() {
-    const senhaDigitada = document.getElementById('loginSenha').value;
-    const usuarioSelecionado = document.getElementById('loginUsuario').value;
-    const erroMsg = document.getElementById('erroLogin');
-
-    if (senhaDigitada === SENHA_SECRETA) {
-        sessionStorage.setItem('acessoGarantido', 'true');
-        sessionStorage.setItem('usuarioLogado', usuarioSelecionado);
-
+    // Verifica se já fez login
+    if (sessionStorage.getItem('acessoGarantido') === 'true') {
         document.getElementById('loginOverlay').style.display = 'none';
-
-        const sexo = localStorage.getItem(`sexo_${usuarioSelecionado}`) || 'M';
-        const saudacao = sexo === 'F' ? 'Bem-vinda' : 'Bem-vindo';
-
-        showToast(`${saudacao}, ${usuarioSelecionado}!`);
-    } else {
-        erroMsg.style.display = 'block';
-        document.getElementById('loginSenha').value = '';
     }
-}
 
-const inputSenha = document.getElementById('loginSenha');
-if (inputSenha) {
-    inputSenha.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') verificarAcesso();
-    });
-}
+    function verificarAcesso() {
+        const senhaDigitada = document.getElementById('loginSenha').value;
+        const usuarioSelecionado = document.getElementById('loginUsuario').value;
+        const erroMsg = document.getElementById('erroLogin');
 
-// Permite apertar "Enter" para entrar
-document.getElementById('loginSenha').addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') verificarAcesso();
-});
+        if (senhaDigitada === SENHA_SECRETA) {
+            sessionStorage.setItem('acessoGarantido', 'true');
+            sessionStorage.setItem('usuarioLogado', usuarioSelecionado);
+            document.getElementById('loginOverlay').style.display = 'none';
 
+            const sexo = localStorage.getItem(`sexo_${usuarioSelecionado}`) || 'M';
+            let saudacao = sexo === 'F' ? 'Bem-vinda' : 'Bem-vindo';
+            showToast(`${saudacao}, ${usuarioSelecionado}!`);
+        } else {
+            erroMsg.style.display = 'block';
+            document.getElementById('loginSenha').value = '';
+        }
+    }
 
-<button id="btnInstalar" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); padding:12px 20px; background:#22c55e; color:#fff; border:none; border-radius:10px; z-index:9999; font-weight:bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3); cursor: pointer;">
-    📲 Instalar App
-</button>
+    // Permite apertar "Enter" para entrar
+    const inputSenha = document.getElementById('loginSenha');
+    if (inputSenha) {
+        inputSenha.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') verificarAcesso();
+        });
+    }
 
-<script>
     // ==========================================
     // --- 👆 MOTOR DE BIOMETRIA (PASSKEYS) ---
     // ==========================================
@@ -2027,11 +2007,7 @@ document.getElementById('loginSenha').addEventListener('keypress', function (e) 
                     publicKey: {
                         challenge: gerarDesafio(),
                         rp: { name: "Guia Bolso Casal", id: window.location.hostname },
-                        user: {
-                            id: gerarDesafio(),
-                            name: "usuario",
-                            displayName: "Acesso Seguro"
-                        },
+                        user: { id: gerarDesafio(), name: "usuario", displayName: "Acesso Seguro" },
                         pubKeyCredParams: [{ type: "public-key", alg: -7 }],
                         authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
                         timeout: 60000
@@ -2040,7 +2016,7 @@ document.getElementById('loginSenha').addEventListener('keypress', function (e) 
 
                 let idArray = Array.from(new Uint8Array(credential.rawId));
                 localStorage.setItem('biometriaAppId', JSON.stringify(idArray));
-                liberarTela();
+                liberarTelaBiometria();
 
             } else {
                 // PRÓXIMAS VEZES: SÓ LÊ A DIGITAL
@@ -2052,27 +2028,26 @@ document.getElementById('loginSenha').addEventListener('keypress', function (e) 
                         userVerification: "required"
                     }
                 });
-                liberarTela();
+                liberarTelaBiometria();
             }
         } catch (erro) {
             console.log("Aviso: Biometria cancelada ou falhou.", erro);
         }
     }
 
-    function liberarTela() {
+    function liberarTelaBiometria() {
         const usuarioSelecionado = document.getElementById('loginUsuario').value;
         sessionStorage.setItem('acessoGarantido', 'true');
         sessionStorage.setItem('usuarioLogado', usuarioSelecionado);
-        
         document.getElementById('loginOverlay').style.display = 'none';
 
         const sexo = localStorage.getItem(`sexo_${usuarioSelecionado}`) || 'M';
         let saudacao = sexo === 'F' ? 'Bem-vinda' : 'Bem-vindo';
-        showToast(`${saudacao}, ${usuarioSelecionado}!`);
+        showToast(`${saudacao}, ${usuarioSelecionado} (via Biometria)!`);
     }
 
     // ==========================================
-    // 📲 LÓGICA DE INSTALAÇÃO DO APP (PWA)
+    // ⚙️ EVENTOS AUTOMÁTICOS E APP (PWA)
     // ==========================================
     let deferredPrompt;
 
@@ -2082,40 +2057,39 @@ document.getElementById('loginSenha').addEventListener('keypress', function (e) 
         document.getElementById('btnInstalar').style.display = 'block';
     });
 
-    document.getElementById('btnInstalar').addEventListener('click', async () => {
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        await deferredPrompt.userChoice;
-        deferredPrompt = null;
-        document.getElementById('btnInstalar').style.display = 'none';
-    });
-
-    // ==========================================
-    // ⚙️ EVENTOS AUTOMÁTICOS (AO ABRIR O APP)
-    // ==========================================
     document.addEventListener("DOMContentLoaded", () => {
-        
-        // 1. Inicia o Service Worker do Firebase
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('firebase-messaging-sw.js')
-            .then(() => console.log("SW de Notificação registrado!"))
-            .catch(err => console.log("Aviso no SW de Notificação:", err));
-        }
-
-        // 2. Chama a Biometria Automática (Se já estiver cadastrada e não estiver logado)
+        // Biometria Automática
         const temBiometria = localStorage.getItem('biometriaAppId');
         const overlay = document.getElementById('loginOverlay');
         
         if (temBiometria && overlay.style.display !== 'none') {
-            // Tenta puxar sozinho após 800ms
             setTimeout(() => { usarBiometria(); }, 800);
-
-            // Se o navegador bloquear o automático, abre no primeiro toque NA TELA DE LOGIN
             overlay.addEventListener("click", () => {
                 if(overlay.style.display !== 'none') usarBiometria();
             }, { once: true });
         }
+
+        // Lógica de clique do Botão de Instalar (agora seguro)
+        const botaoInstalar = document.getElementById('btnInstalar');
+        if(botaoInstalar) {
+            botaoInstalar.addEventListener('click', async () => {
+                if (!deferredPrompt) return;
+                deferredPrompt.prompt();
+                await deferredPrompt.userChoice;
+                deferredPrompt = null;
+                botaoInstalar.style.display = 'none';
+            });
+        }
     });
+
 </script>
+
+<button id="btnInstalar" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); padding:12px 20px; background:#22c55e; color:#fff; border:none; border-radius:10px; z-index:9999; font-weight:bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3); cursor: pointer;">
+    📲 Instalar App
+</button>
+
+</body>
+</html>
+
 </body>
 </html>
