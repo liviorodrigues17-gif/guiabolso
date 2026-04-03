@@ -1,4 +1,4 @@
-const CACHE_NAME = "guia-bolso-v1.3";
+const CACHE_NAME = "guia-bolso-v4.0"; // Aumentamos a versão para forçar a atualização
 
 const urlsToCache = [
   "/guiabolso/",
@@ -8,7 +8,7 @@ const urlsToCache = [
   "/guiabolso/icon-512.png"
 ];
 
-// Instala o Service Worker
+// Instala o Service Worker e força a atualização
 self.addEventListener("install", (event) => {
   console.log("Service Worker instalado!");
 
@@ -18,10 +18,10 @@ self.addEventListener("install", (event) => {
     })
   );
 
-  self.skipWaiting();
+  self.skipWaiting(); // Faz a nova versão assumir o controle imediatamente
 });
 
-// Ativa e limpa cache antigo
+// Ativa e limpa o lixo (cache antigo)
 self.addEventListener("activate", (event) => {
   console.log("Service Worker ativado!");
 
@@ -40,6 +40,15 @@ self.addEventListener("activate", (event) => {
 
 // Intercepta requisições
 self.addEventListener("fetch", (event) => {
+  
+  // 🚀 PASSE LIVRE PARA O FIREBASE: Deixa o tempo real funcionar solto!
+  if (event.request.url.includes('firestore.googleapis.com') || 
+      event.request.url.includes('firebase') || 
+      event.request.url.includes('identitytoolkit')) {
+      return; // Ignora o cache e vai direto pra internet
+  }
+
+  // Para os arquivos normais (HTML, imagens), usa o cache para abrir offline
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request);
