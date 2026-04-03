@@ -12,23 +12,16 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// 2. RECEBE A MENSAGEM COM A TELA APAGADA / APP FECHADO
+// 2. EVITANDO O CLONE: O Firebase já mostra a notificação automaticamente.
+// Se deixarmos o comando 'showNotification' aqui, ele duplica!
 messaging.onBackgroundMessage(function(payload) {
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-    body: payload.notification.body,
-    icon: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=Money",
-    vibrate: [300, 100, 300, 100, 300], // Vibração brutal pra acordar o celular
-    requireInteraction: true // Só some se o usuário clicar
-  };
-
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  console.log("Mensagem recebida! O próprio Firebase vai desenhar na tela.");
 });
 
 // --------------------------------------------------------
-// 3. SEU CÓDIGO DE CACHE (Agora tudo junto e misturado)
+// 3. SEU CÓDIGO DE CACHE 
 // --------------------------------------------------------
-const CACHE_NAME = "guia-bolso-v6.0"; // Versão 6 pra forçar a atualização do celular!
+const CACHE_NAME = "guia-bolso-v7.0"; // 🚀 Atualizado para matar a notificação dupla
 
 const urlsToCache = [
   "/guiabolso/",
@@ -50,7 +43,6 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  // PASSE LIVRE DO BANCO DE DADOS (Pro gráfico atualizar na hora)
   if (event.request.url.includes('firestore.googleapis.com') || event.request.url.includes('firebase') || event.request.url.includes('identitytoolkit')) {
       return; 
   }
