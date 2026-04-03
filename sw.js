@@ -1,4 +1,4 @@
-const CACHE_NAME = "guia-bolso-v11";
+const CACHE_NAME = "guia-bolso-v1.1";
 
 const urlsToCache = [
   "/guiabolso/",
