@@ -1808,10 +1808,9 @@ const db = firebase.firestore();
 // =======================================================
 // 🔔 NOTIFICAÇÕES PUSH (FIREBASE)
 // =======================================================
-  async function iniciarNotificacoes() {
-  try {
 
-    // 🔔 pede permissão
+async function iniciarNotificacoes() {
+  try {
     const permissao = await Notification.requestPermission();
 
     if (permissao !== "granted") {
@@ -1819,13 +1818,10 @@ const db = firebase.firestore();
       return;
     }
 
-    // 🔥 registra o service worker no caminho correto do GitHub
     const registration = await navigator.serviceWorker.register('/guiabolso/firebase-messaging-sw.js');
 
-    // 🔥 inicializa o messaging
     const messaging = firebase.messaging();
 
-    // 🔥 pega o token
     const token = await messaging.getToken({
       vapidKey: "BIvSshhBpe7qbCZ7mpXk4Ng5LDKg3IYQWXSyTO2yViB7U-PzqJtWAxMqdVUkHV-X5H5E6I5kH7h1DFPZd5XAQGM",
       serviceWorkerRegistration: registration
@@ -1833,9 +1829,8 @@ const db = firebase.firestore();
 
     console.log("TOKEN:", token);
 
-    // 🔥 salva no Firestore
     if (token) {
-      await firebase.firestore().collection("tokens").doc(token).set({
+      await db.collection("tokens").doc(token).set({
         token: token
       });
     }
@@ -1844,6 +1839,13 @@ const db = firebase.firestore();
     console.log("Erro notificações:", erro);
   }
 }
+
+function pedirPermissaoNotificacao() {
+  iniciarNotificacoes();
+}
+
+iniciarApp();
+// iniciarNotificacoes(); // só deixe essa linha se quiser pedir permissão automaticamente ao abrir
 // =======================================================
 // ☁️ SINCRONIZAÇÃO COM FIREBASE
 // =======================================================
