@@ -1829,15 +1829,19 @@ function verificarAcesso() {
     const erroMsg = document.getElementById('erroLogin');
 
     if (senhaDigitada === SENHA_SECRETA) {
-        // Salva que o acesso foi permitido nesta sessão
+
         sessionStorage.setItem('acessoGarantido', 'true');
         sessionStorage.setItem('usuarioLogado', usuarioSelecionado);
-        
-        // Esconde a tela de login
-        document.getElementById('loginOverlay').style.fadeOut = "slow";
+
         document.getElementById('loginOverlay').style.display = 'none';
-        
-        showToast(`Bem-vindo(a), ${usuarioSelecionado}!`);
+
+        // 🔥 NOVO: pega sexo do usuário
+        const sexo = localStorage.getItem(`sexo_${usuarioSelecionado}`) || 'M';
+
+        let saudacao = sexo === 'F' ? 'Bem-vinda' : 'Bem-vindo';
+
+        showToast(`${saudacao}, ${usuarioSelecionado}!`);
+
     } else {
         erroMsg.style.display = 'block';
         document.getElementById('loginSenha').value = '';
@@ -1849,7 +1853,7 @@ document.getElementById('loginSenha').addEventListener('keypress', function (e) 
     if (e.key === 'Enter') verificarAcesso();
 });
 
-// ==========================================
+    // ==========================================
     // --- 👆 MOTOR DE BIOMETRIA (PASSKEYS) ---
     // ==========================================
     
@@ -1920,8 +1924,16 @@ document.getElementById('loginSenha').addEventListener('keypress', function (e) 
         sessionStorage.setItem('usuarioLogado', usuarioSelecionado);
         
         document.getElementById('loginOverlay').style.display = 'none';
-        showToast(`Bem-vindo(a) via Biometria!`);
+        const usuarioSelecionado = document.getElementById('loginUsuario').value;
+
+        // pega sexo salvo
+        const sexo = localStorage.getItem(`sexo_${usuarioSelecionado}`) || 'M';
+
+        let saudacao = sexo === 'F' ? 'Bem-vinda' : 'Bem-vindo';
+
+        showToast(`${saudacao}, ${usuarioSelecionado}!`);
     }
+    
 </script> 
 <button id="btnInstalar" style="
   display:none;
@@ -1955,6 +1967,24 @@ document.getElementById('btnInstalar').addEventListener('click', async () => {
   await deferredPrompt.userChoice;
   deferredPrompt = null;
 });
+
+<script>
+window.addEventListener("load", () => {
+
+  // Esconde botão se já tiver biometria cadastrada
+  if (localStorage.getItem('biometriaAppId')) {
+    document.getElementById('btnBiometria').style.display = 'none';
+  }
+
+  // Chama biometria automaticamente
+  setTimeout(() => {
+    if (localStorage.getItem('biometriaAppId')) {
+      usarBiometria();
+    }
+  }, 800);
+
+});
+</script>
 </script>
 </body>
 </html>
