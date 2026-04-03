@@ -1808,9 +1808,10 @@ const db = firebase.firestore();
 // =======================================================
 // 🔔 NOTIFICAÇÕES PUSH (FIREBASE)
 // =======================================================
-
-async function iniciarNotificacoes() {
+  async function iniciarNotificacoes() {
   try {
+
+    // 🔔 pede permissão
     const permissao = await Notification.requestPermission();
 
     if (permissao !== "granted") {
@@ -1818,11 +1819,13 @@ async function iniciarNotificacoes() {
       return;
     }
 
-    // 🔥 REGISTRA O SW CERTO
-    const registration = await navigator.serviceWorker.register("/guiabolso/firebase-messaging-sw.js");
+    // 🔥 registra o service worker no caminho correto do GitHub
+    const registration = await navigator.serviceWorker.register('/guiabolso/firebase-messaging-sw.js');
 
+    // 🔥 inicializa o messaging
     const messaging = firebase.messaging();
 
+    // 🔥 pega o token
     const token = await messaging.getToken({
       vapidKey: "BIvSshhBpe7qbCZ7mpXk4Ng5LDKg3IYQWXSyTO2yViB7U-PzqJtWAxMqdVUkHV-X5H5E6I5kH7h1DFPZd5XAQGM",
       serviceWorkerRegistration: registration
@@ -1830,15 +1833,17 @@ async function iniciarNotificacoes() {
 
     console.log("TOKEN:", token);
 
+    // 🔥 salva no Firestore
     if (token) {
-      await db.collection("tokens").doc(token).set({
+      await firebase.firestore().collection("tokens").doc(token).set({
         token: token
       });
     }
 
   } catch (erro) {
-   
-
+    console.log("Erro notificações:", erro);
+  }
+}
 // =======================================================
 // ☁️ SINCRONIZAÇÃO COM FIREBASE
 // =======================================================
@@ -1948,12 +1953,13 @@ function verificarVencimentos() {
 // 🚀 INICIALIZAÇÃO FINAL
 // =======================================================
 
+const SENHA_SECRETA = "Loloelili12#";
+
+// inicia firebase/notificações
 iniciarApp();
 iniciarNotificacoes();
-    
-    const SENHA_SECRETA = "Loloelili12#"; // ⬅️ TROQUE POR UMA SENHA QUE SÓ VOCÊS SAIBAM!
 
-// Verifica se já fez login antes para não pedir senha toda vez que atualizar a página
+// se já estiver logado, esconde a tela
 if (sessionStorage.getItem('acessoGarantido') === 'true') {
     document.getElementById('loginOverlay').style.display = 'none';
 }
@@ -1964,23 +1970,26 @@ function verificarAcesso() {
     const erroMsg = document.getElementById('erroLogin');
 
     if (senhaDigitada === SENHA_SECRETA) {
-
         sessionStorage.setItem('acessoGarantido', 'true');
         sessionStorage.setItem('usuarioLogado', usuarioSelecionado);
 
         document.getElementById('loginOverlay').style.display = 'none';
 
-        // 🔥 NOVO: pega sexo do usuário
         const sexo = localStorage.getItem(`sexo_${usuarioSelecionado}`) || 'M';
-
-        let saudacao = sexo === 'F' ? 'Bem-vinda' : 'Bem-vindo';
+        const saudacao = sexo === 'F' ? 'Bem-vinda' : 'Bem-vindo';
 
         showToast(`${saudacao}, ${usuarioSelecionado}!`);
-
     } else {
         erroMsg.style.display = 'block';
         document.getElementById('loginSenha').value = '';
     }
+}
+
+const inputSenha = document.getElementById('loginSenha');
+if (inputSenha) {
+    inputSenha.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') verificarAcesso();
+    });
 }
 
 // Permite apertar "Enter" para entrar
