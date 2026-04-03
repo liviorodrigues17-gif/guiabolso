@@ -1919,20 +1919,20 @@ document.getElementById('loginSenha').addEventListener('keypress', function (e) 
 
     // Função que esconde a tela preta (usada tanto pela senha quanto pela biometria)
     function liberarTela() {
-        const usuarioSelecionado = document.getElementById('loginUsuario').value;
-        sessionStorage.setItem('acessoGarantido', 'true');
-        sessionStorage.setItem('usuarioLogado', usuarioSelecionado);
-        
-        document.getElementById('loginOverlay').style.display = 'none';
-        const usuarioSelecionado = document.getElementById('loginUsuario').value;
+    const usuarioSelecionado = document.getElementById('loginUsuario').value;
 
-        // pega sexo salvo
-        const sexo = localStorage.getItem(`sexo_${usuarioSelecionado}`) || 'M';
+    sessionStorage.setItem('acessoGarantido', 'true');
+    sessionStorage.setItem('usuarioLogado', usuarioSelecionado);
+    
+    document.getElementById('loginOverlay').style.display = 'none';
 
-        let saudacao = sexo === 'F' ? 'Bem-vinda' : 'Bem-vindo';
+    // pega sexo salvo
+    const sexo = localStorage.getItem(`sexo_${usuarioSelecionado}`) || 'M';
 
-        showToast(`${saudacao}, ${usuarioSelecionado}!`);
-    }
+    let saudacao = sexo === 'F' ? 'Bem-vinda' : 'Bem-vindo';
+
+    showToast(`${saudacao}, ${usuarioSelecionado}!`);
+}
     
 </script> 
 <button id="btnInstalar" style="
@@ -1950,6 +1950,7 @@ document.getElementById('loginSenha').addEventListener('keypress', function (e) 
 ">
   📲 Instalar App
 </button>
+
 <script>
 let deferredPrompt;
 
@@ -1967,16 +1968,16 @@ document.getElementById('btnInstalar').addEventListener('click', async () => {
   await deferredPrompt.userChoice;
   deferredPrompt = null;
 });
+</script>
 
 <script>
 window.addEventListener("load", () => {
 
-  // Esconde botão se já tiver biometria cadastrada
   if (localStorage.getItem('biometriaAppId')) {
-    document.getElementById('btnBiometria').style.display = 'none';
+    const btn = document.getElementById('btnBiometria');
+    if (btn) btn.style.display = 'none';
   }
 
-  // Chama biometria automaticamente
   setTimeout(() => {
     if (localStorage.getItem('biometriaAppId')) {
       usarBiometria();
@@ -1985,6 +1986,7 @@ window.addEventListener("load", () => {
 
 });
 </script>
+
 </script>
 </body>
 </html>
