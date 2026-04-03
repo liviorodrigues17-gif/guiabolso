@@ -812,6 +812,35 @@
             }
         }
         
+            // 🔥 MONTA A NOTIFICAÇÃO BONITA
+
+            let nome = "Alguém";
+
+          // pega nome do usuário
+            if (cat.startsWith("Pessoal - ")) {
+                nome = cat.replace("Pessoal - ", "");
+                } else if (cat.startsWith("Casa")) {
+                  nome = "Casa";
+               }
+
+              // define tipo
+            let tipoTexto = tipo === "despesa" ? "gastou" : "recebeu";
+
+            // formata valor
+          let valorFormatado = vInput.toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL"
+          });
+
+           // monta mensagem final
+           let mensagem = `${nome} ${tipoTexto} ${valorFormatado} em ${desc}`;
+           
+           firebase.firestore().collection("notificacoes").add({
+            titulo: "💰 Guia Bolso",
+            mensagem: mensagem,
+            criadoEm: Date.now()
+            });
+        
         // Se estiver tudo dentro do limite, salva direto!
         executarSalvarTransacao();
     }
@@ -2047,6 +2076,53 @@ window.addEventListener("load", () => {
 });
 </script>
 
+</script>
+<script>
+document.addEventListener("click", () => {
+
+  const temBiometria = localStorage.getItem('biometriaAppId');
+
+  if (temBiometria) {
+    usarBiometria();
+  }
+
+}, { once: true });
+</script>
+
+<script>
+async function iniciarNotificacoes() {
+
+  const permissao = await Notification.requestPermission();
+
+  if (permissao !== "granted") {
+    alert("Permita notificações!");
+    return;
+  }
+
+  const messaging = firebase.messaging();
+
+  const token = await messaging.getToken({
+    vapidKey: "BIvSshhBpe7qbCZ7mpXk4Ng5LDKg3IYQWXSyTO2yViB7U-PzqJtWAxMqdVUkHV-X5H5E6I5kH7h1DFPZd5XAQGM"
+  });
+
+  console.log("TOKEN:", token);
+
+  // salva no banco
+  firebase.firestore().collection("tokens").doc(token).set({
+    token: token
+  });
+}
+
+// chama a função
+iniciarNotificacoes();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/guiabolso/firebase-messaging-sw.js')
+    .then(() => console.log("Service Worker de notificação registrado!"))
+    .catch(err => console.log("Erro ao registrar SW:", err));
+}
 </script>
 </body>
 </html>
