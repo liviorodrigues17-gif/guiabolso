@@ -1,7 +1,6 @@
 {
   "name": "Guia Bolso Casal",
   "short_name": "Guia Bolso",
-  "id": "/guiabolso/",
   "start_url": "/guiabolso/",
   "scope": "/guiabolso/",
   "display": "standalone",
