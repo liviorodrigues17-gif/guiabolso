@@ -1770,7 +1770,8 @@
     };
     
     // Inicia a Nuvem
-    firebase.initializeApp(firebaseConfig);
+  function iniciarApp() {
+
     const db = firebase.firestore();
     const cofreRef = db.collection("guiabolso").doc("bancodedados");
     let isAppIniciado = false;
@@ -1781,27 +1782,24 @@
             let dadosNuvem = doc.data();
             let qtdTransacoesAntigas = transacoes.length;
 
-            // Atualiza os dados locais com os dados da nuvem
             usuarios = dadosNuvem.usuarios || [];
             transacoes = dadosNuvem.transacoes || [];
             projetos = dadosNuvem.projetos || [];
 
-            // Dispara Notificação se alguém lançou algo novo
             if (isAppIniciado && transacoes.length > qtdTransacoesAntigas) {
                 dispararNotificacao("💰 Guia Bolso", "Alguém acabou de fazer um novo lançamento!");
             }
 
-            // Atualiza a tela sozinha!
             atualizarCaixa();
             atualizarTela();
             renderizarProjetos();
             
             if(!isAppIniciado) {
                 isAppIniciado = true;
-                verificarVencimentos(); // Checa contas vencendo logo que o app abre
+                verificarVencimentos();
             }
+
         } else {
-            // Primeiro uso de todos: cria o cofre na nuvem
             salvarNaNuvem();
             isAppIniciado = true;
         }
@@ -1812,6 +1810,15 @@
         if(!isAppIniciado) return;
         cofreRef.set({ usuarios: usuarios, transacoes: transacoes, projetos: projetos });
     }
+
+    // 3. INTERCEPTA LOCALSTORAGE
+    const originalSetItem = localStorage.setItem;
+    localStorage.setItem = function(key, value) {
+        originalSetItem.apply(this, arguments);
+        if(key.includes('financas_premium_')) salvarNaNuvem();
+    };
+
+}
 
     // 3. INTERCEPTA O LOCALSTORAGE (Mágica para não precisar reescrever o código todo)
     const originalSetItem = localStorage.setItem;
