@@ -1949,11 +1949,15 @@ function verificarVencimentos() {
     }
 }
 
-const SENHA_SECRETA = "Loloelili12#";
+// =======================================================
+    // 🚀 INICIALIZAÇÃO FINAL E SENHAS
+    // =======================================================
+    const SENHA_SECRETA = "Loloelili12#";
 
-iniciarApp();
+    // 🔴 ISSO AQUI QUE TRAZ OS DADOS DE VOLTA DA NUVEM!
+    iniciarApp();
 
-    // Verifica se já fez login
+    // Verifica se já fez login antes
     if (sessionStorage.getItem('acessoGarantido') === 'true') {
         document.getElementById('loginOverlay').style.display = 'none';
     }
@@ -1977,7 +1981,7 @@ iniciarApp();
         }
     }
 
-    // Permite apertar "Enter" para entrar
+    // Permite apertar "Enter" para entrar com a senha
     const inputSenha = document.getElementById('loginSenha');
     if (inputSenha) {
         inputSenha.addEventListener('keypress', function (e) {
@@ -2083,15 +2087,11 @@ iniciarApp();
             });
         }
     });
-
 </script>
 
 <button id="btnInstalar" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); padding:12px 20px; background:#22c55e; color:#fff; border:none; border-radius:10px; z-index:9999; font-weight:bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3); cursor: pointer;">
     📲 Instalar App
 </button>
-
-</body>
-</html>
 
 </body>
 </html>
