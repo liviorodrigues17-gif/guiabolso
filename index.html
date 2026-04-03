@@ -551,15 +551,34 @@
         document.getElementById('confModal').classList.add('active');
     }
 
-    function confirmarReset() {
-        // Aqui é onde a exclusão acontece de verdade se clicar em "Sim"
-        Object.keys(localStorage).forEach(k => { 
-            if(k.startsWith('financas_premium_')) localStorage.removeItem(k); 
-        });
-        cancelarExclusao();
-        showToast("Aplicativo zerado com sucesso!"); 
-        setTimeout(() => window.location.reload(), 1000);
+    async function confirmarReset() {
+
+    // 🔥 limpa TODO localStorage
+    localStorage.clear();
+
+    // 🔥 limpa sessão
+    sessionStorage.clear();
+
+    // 🔥 limpa cache do PWA (ESSENCIAL)
+    if ('caches' in window) {
+        const keys = await caches.keys();
+        for (let key of keys) {
+            await caches.delete(key);
+        }
     }
+
+    // 🔥 remove biometria (garantia extra)
+    localStorage.removeItem('biometriaAppId');
+
+    cancelarExclusao();
+
+    showToast("Aplicativo zerado COMPLETAMENTE!");
+
+    // 🔥 recarrega limpo
+    setTimeout(() => {
+        window.location.reload(true);
+    }, 1000);
+}
 
     // --- VARIÁVEIS GLOBAIS ---
     let usuarios = []; let transacoes = JSON.parse(localStorage.getItem('financas_premium_transacoes')) || [];
@@ -630,35 +649,64 @@
     function fecharModal() { document.getElementById('modalUsuario').classList.remove('active'); document.getElementById('fileUpload').value = ""; }
     function selecionarAvatarGrade(el, url) { document.querySelectorAll('.avatar-option').forEach(e => e.classList.remove('selected')); el.classList.add('selected'); avatarFinalSelecionado = url; document.getElementById('previewProfileImg').src = url; }
     function previewFoto(input) { if (input.files && input.files[0]) { const r = new FileReader(); r.onload = e => { avatarFinalSelecionado = e.target.result; document.getElementById('previewProfileImg').src = avatarFinalSelecionado; }; r.readAsDataURL(input.files[0]); } }
+    
     function salvarUsuario() {
-        let n = document.getElementById('inputNome').value.trim(); 
-        let r = parseMoeda(document.getElementById('inputRenda').value);
-        
-        if (!n || r <= 0) { showToast("Preencha corretamente!"); return; }
-        
-        let img = avatarFinalSelecionado || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(n)}&backgroundColor=e2e8f0`;
-        
-        if (editIndex === -1) { 
-            usuarios.push({ nome: n, renda: r, avatarUrl: img }); 
-            showToast(`${n} adicionado!`); 
-        } else { 
-            let nomeAntigo = usuarios[editIndex].nome;
-            usuarios[editIndex] = { nome: n, renda: r, avatarUrl: img }; 
-            
-            // --- A MÁGICA DA CASCATA: Sincroniza as transações antigas com o nome novo ---
-            if (nomeAntigo !== n) {
-                transacoes.forEach(tx => {
-                    if (tx.categoria === `Pessoal - ${nomeAntigo}`) {
-                        tx.categoria = `Pessoal - ${n}`;
-                    }
-                });
-                localStorage.setItem('financas_premium_transacoes', JSON.stringify(transacoes));
-            }
-            
-            showToast(`Atualizado!`); 
-        }
-        salvarNoCache(); fecharModal(); atualizarTela(); atualizarCaixa();
+    let n = document.getElementById('inputNome').value.trim(); 
+    let r = parseMoeda(document.getElementById('inputRenda').value);
+    
+    if (!n || r <= 0) { 
+        showToast("Preencha corretamente!"); 
+        return; 
     }
+
+    // 🔥 cria um ID único baseado no nome
+    let id = n.toLowerCase().replace(/\s+/g, '');
+
+    // 🔥 usa a imagem selecionada OU gera avatar
+    let img = avatarFinalSelecionado || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(n)}&backgroundColor=e2e8f0`;
+
+    // 🔥 SALVA FOTO SEPARADA (RESOLVE SEU PROBLEMA)
+    localStorage.setItem(`foto_${id}`, img);
+
+    if (editIndex === -1) { 
+        usuarios.push({ nome: n, renda: r, avatarUrl: img }); 
+        showToast(`${n} adicionado!`); 
+
+    } else { 
+        let nomeAntigo = usuarios[editIndex].nome;
+
+        usuarios[editIndex] = { nome: n, renda: r, avatarUrl: img }; 
+        
+        // 🔥 atualiza chave da foto se mudar nome
+        let idAntigo = nomeAntigo.toLowerCase().replace(/\s+/g, '');
+        if (idAntigo !== id) {
+            let fotoAntiga = localStorage.getItem(`foto_${idAntigo}`);
+            if (fotoAntiga) {
+                localStorage.setItem(`foto_${id}`, fotoAntiga);
+                localStorage.removeItem(`foto_${idAntigo}`);
+            }
+        }
+
+        // --- CASCATA (seu código original) ---
+        if (nomeAntigo !== n) {
+            transacoes.forEach(tx => {
+                if (tx.categoria === `Pessoal - ${nomeAntigo}`) {
+                    tx.categoria = `Pessoal - ${n}`;
+                }
+            });
+            localStorage.setItem('financas_premium_transacoes', JSON.stringify(transacoes));
+        }
+        
+        showToast(`Atualizado!`); 
+    }
+
+    avatarFinalSelecionado = null; // 🔥 limpa seleção
+
+    salvarNoCache(); 
+    fecharModal(); 
+    atualizarTela(); 
+    atualizarCaixa();
+}
 
     // --- TRANSAÇÕES (MÁGICA DAS PÍLULAS) ---
     function carregarCategoriasDinamicas() { const opt = document.getElementById('optgroupPessoais'); opt.innerHTML = ''; usuarios.forEach(u => opt.innerHTML += `<option value="Pessoal - ${u.nome}">👤 Pessoal - ${u.nome}</option>`); }
@@ -1973,16 +2021,21 @@ document.getElementById('btnInstalar').addEventListener('click', async () => {
 <script>
 window.addEventListener("load", () => {
 
-  if (localStorage.getItem('biometriaAppId')) {
+  const temBiometria = localStorage.getItem('biometriaAppId');
+
+  if (temBiometria) {
+
     const btn = document.getElementById('btnBiometria');
     if (btn) btn.style.display = 'none';
-  }
 
-  setTimeout(() => {
-    if (localStorage.getItem('biometriaAppId')) {
+    // 👇 força uma interação mínima
+    document.body.addEventListener('click', iniciarAutoBio, { once: true });
+
+    function iniciarAutoBio() {
       usarBiometria();
     }
-  }, 800);
+
+  }
 
 });
 </script>
