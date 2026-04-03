@@ -34,7 +34,29 @@
     <style>
         :root { --primary: #5c2092; --primary-dark: #3b1063; --bg: #f4f5f9; --card: #ffffff; --text: #1c1c1e; --secondary-text: #6e6e73; --green: #22c55e; --red: #ef4444; --input-bg: #f3f4f6; --chart-empty: #e5e7eb; --border-hover: #e2e8f0; --nav-bg: #ffffff; }
         body.dark-mode { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --secondary-text: #cbd5e1; --input-bg: #334155; --chart-empty: #334155; --border-hover: #475569; --nav-bg: #1e293b; --primary: #a855f7; --primary-dark: #9333ea; --red: #f87171; --green: #4ade80; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        /* 🔥 O ESCUDO NUCLEAR (Aplica em TUDO) */
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            -webkit-touch-callout: none; /* Bloqueia o menu no iOS */
+            -webkit-user-select: none;   /* Safari */
+            -khtml-user-select: none;    /* Konqueror HTML */
+            -moz-user-select: none;      /* Firefox antigo */
+            -ms-user-select: none;       /* Internet Explorer/Edge */
+            user-select: none;           /* Chrome e Android */
+        }
+        
+        /* 🟢 Libera a digitação SOMENTE nos campos que importam */
+        input, select, textarea {
+            -webkit-user-select: auto !important;
+            -khtml-user-select: auto !important;
+            -moz-user-select: auto !important;
+            -ms-user-select: auto !important;
+            user-select: auto !important;
+        }
+
         body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; transition: 0.3s; }
         .app-container { width: 100%; max-width: 1400px; margin: 0 auto; position: relative; padding-bottom: 90px; min-height: 100vh; }
         
@@ -505,10 +527,18 @@
                 originalSetItem.call(localStorage, 'financas_premium_transacoes', JSON.stringify(transacoes));
                 originalSetItem.call(localStorage, 'financas_premium_projetos', JSON.stringify(projetos));
 
-                if (isAppIniciado && transacoes.length > qtdTransacoesAntigas) {
-                    const ultimaTx = transacoes[0]; 
-                    showToast(`Novo lançamento: ${ultimaTx.descricao} de ${ultimaTx.valor.toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}`);
-                    try { let som = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); som.play().catch(() => {}); } catch(e){}
+                if (isAppIniciado && transacoes.length > qtdAntiga && transacoes.length > 0) {
+            
+                 // 🎯 A MÁGICA À PROVA DE FALHAS: Pega a transação com o maior carimbo de tempo
+                const ultimaTx = transacoes.reduce((maisNova, atual) => {
+                return (atual.timestamp || 0) > (maisNova.timestamp || 0) ? atual : maisNova;
+                 }, transacoes[0]);
+            
+                 if (ultimaTx) {
+                const msgVisual = `${ultimaTx.descricao} de ${ultimaTx.valor.toLocaleString("pt-BR", {style:"currency",currency:"BRL"})} foi adicionado!`;
+                showToast(msgVisual);
+                try { let som = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); som.play().catch(() => {}); } catch(e){}
+                  }
                 }
 
                 atualizarCaixa();
@@ -779,20 +809,21 @@
             if (rep === 'parcelada') { qtdMeses = par; vParcela = vInput / qtdMeses; } else if (rep === 'fixa') { qtdMeses = 120; vParcela = vInput; } 
             for (let i = 1; i <= qtdMeses; i++) { 
                 let dPar = desc; if (rep === 'parcelada') dPar = `${desc} (${i}/${qtdMeses})`; let mesAlvo = (m - 1) + (i - 1); let dtTemp = new Date(a, mesAlvo, 1); let aF = dtTemp.getFullYear(); let mF = dtTemp.getMonth(); let uDia = new Date(aF, mF + 1, 0).getDate(); let dSeg = Math.min(d, uDia); 
-                transacoes.push({ groupId: gId, tipo: tipo, descricao: dPar, valor: vParcela, categoria: cat, data: `${aF}-${String(mF + 1).padStart(2, '0')}-${String(dSeg).padStart(2, '0')}`, hora: horaAtual }); 
+                transacoes.push({ groupId: gId, tipo: tipo, descricao: dPar, valor: vParcela, categoria: cat, data: `${aF}-${String(mF + 1).padStart(2, '0')}-${String(dSeg).padStart(2, '0')}`, hora: horaAtual, timestamp: Date.now() }); 
             }
             
-            // --- NOTIFICAÇÃO ESTILO CARTÃO DE CRÉDITO ---
             let nomeLogado = sessionStorage.getItem('usuarioLogado') || "Alguém";
             let valorFmt = vInput.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-            let dataFmt = dt.split('-').reverse().join('/');
-            let acao = tipo === 'despesa' ? "gastou" : "recebeu";
-            let icone = tipo === 'despesa' ? "💳" : "💰";
+            let dataFmt = dt.split('-').reverse().join('/'); 
+            
+            let acao = tipo === 'despesa' ? "gastou" : "guardou/recebeu";
+            let icone = tipo === 'despesa' ? "💸" : "🤑";
+            
+            let tipoCat = cat.startsWith('Casa') ? "🏠 Casa" : "👤 Pessoal";
             let catLimpa = cat.replace('Pessoal - ', '').replace('Casa - ', '');
-            let tagTipo = cat.startsWith('Casa') ? "🏠 Casa" : "👤 Pessoal";
 
             let tituloPush = `${icone} ${nomeLogado} ${acao} ${valorFmt}`;
-            let mensagemPush = `${catLimpa} (${tagTipo}) • ${desc} • ${dataFmt}`;
+            let mensagemPush = `${tipoCat} ➔ ${catLimpa}\n📝 Item: ${desc}\n📅 Data: ${dataFmt}`;
 
             db.collection("notificacoes").add({
                 titulo: tituloPush,
@@ -802,7 +833,7 @@
 
             showToast(rep === 'unica' ? "Salvo!" : (rep === 'fixa' ? "Conta Fixa gerada por 10 anos!" : `${qtdMeses} parcelas geradas!`));
         } else { 
-            let tx = transacoes[editTxIndex]; tx.tipo = tipo; tx.descricao = desc; tx.valor = vInput; tx.categoria = cat; tx.data = dt; tx.hora = horaAtual; showToast("Atualizado!"); 
+            let tx = transacoes[editTxIndex]; tx.tipo = tipo; tx.descricao = desc; tx.valor = vInput; tx.categoria = cat; tx.data = dt; tx.hora = horaAtual; tx.timestamp = Date.now(); showToast("Atualizado!"); 
         }
         
         transacoes.sort((a, b) => new Date(b.data) - new Date(a.data)); localStorage.setItem('financas_premium_transacoes', JSON.stringify(transacoes));
@@ -1009,22 +1040,47 @@
         });
 
         document.getElementById('totalCasaAcerto').innerText = gastoCasa.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-        if (gastoCasa === 0) { container.innerHTML = '<div class="empty-state">Nenhuma despesa de casa registrada neste mês. Tudo certo por aqui!</div>'; return; }
+        
+        // --- 🌟 NOVO: BLOCO DE GASTOS PESSOAIS DINÂMICO ---
+        let htmlPessoais = "";
+        if (gPes1 > 0 || gPes2 > 0) {
+            htmlPessoais = `<div style="display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap;">`;
+            if (gPes1 > 0) {
+                htmlPessoais += `<div style="background: rgba(92, 32, 146, 0.1); color: var(--primary); padding: 8px 15px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; border: 1px solid rgba(92, 32, 146, 0.2);">👤 ${u1.nome} já gastou ${gPes1.toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</div>`;
+            }
+            if (gPes2 > 0) {
+                htmlPessoais += `<div style="background: rgba(34, 197, 94, 0.1); color: var(--green); padding: 8px 15px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; border: 1px solid rgba(34, 197, 94, 0.2);">👤 ${u2.nome} já gastou ${gPes2.toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</div>`;
+            }
+            htmlPessoais += `</div>`;
+        }
 
-        let livre1 = u1.renda - gPes1; if (livre1 < 0) livre1 = 0; let livre2 = u2.renda - gPes2; if (livre2 < 0) livre2 = 0;
+        if (gastoCasa === 0) { 
+            container.innerHTML = htmlPessoais + '<div class="empty-state">Nenhuma despesa de casa registrada neste mês.</div>'; 
+            return; 
+        }
+
+        // --- Lógica de Cálculo Realista (Subtraindo o pessoal antes da força de divisão) ---
+        let livre1 = u1.renda - gPes1; if (livre1 < 0) livre1 = 0; 
+        let livre2 = u2.renda - gPes2; if (livre2 < 0) livre2 = 0;
         let cor1 = 'var(--primary)'; let cor2 = 'var(--green)';
 
         const criarCartao = (titulo, desc, icone, paga1, paga2) => {
             let p1 = (paga1 / gastoCasa) * 100; let p2 = (paga2 / gastoCasa) * 100; let sobra1 = livre1 - paga1; let sobra2 = livre2 - paga2;
-            return `<div class="split-card"><div class="split-header"><div class="split-title"><span>${icone}</span> ${titulo}</div></div><p class="split-desc">${desc}</p><div class="split-bar-container"><div class="split-bar-1" style="width: ${p1}%; background: ${cor1};">${p1.toFixed(0)}%</div><div class="split-bar-2" style="width: ${p2}%; background: ${cor2};">${p2.toFixed(0)}%</div></div><div class="split-details"><div class="split-user-col"><span class="split-user-name" style="color: ${cor1};">${u1.nome} paga:</span><span class="split-value">${paga1.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span><span class="split-result">Sobrará: ${sobra1.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></div><div class="split-user-col" style="text-align: right;"><span class="split-user-name" style="color: ${cor2};">${u2.nome} paga:</span><span class="split-value">${paga2.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span><span class="split-result">Sobrará: ${sobra2.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></div></div></div>`;
+            return `<div class="split-card"><div class="split-header"><div class="split-title"><span>${icone}</span> ${titulo}</div></div><p class="split-desc">${desc}</p><div class="split-bar-container"><div class="split-bar-1" style="width: ${p1}%; background: ${cor1};">${p1.toFixed(0)}%</div><div class="split-bar-2" style="width: ${p2}%; background: ${cor2};">${p2.toFixed(0)}%</div></div><div class="split-details"><div class="split-user-col"><span class="split-user-name" style="color: ${cor1};">${u1.nome} paga:</span><span class="split-value">${paga1.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span><span class="split-result">Livre: ${sobra1.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></div><div class="split-user-col" style="text-align: right;"><span class="split-user-name" style="color: ${cor2};">${u2.nome} paga:</span><span class="split-value">${paga2.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span><span class="split-result">Livre: ${sobra2.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></div></div></div>`;
         };
 
-        let html = "";
-        html += criarCartao("Divisão 50/50", "As despesas da casa são divididas exatamente ao meio, independentemente de quem ganha mais ou dívidas pessoais.", "⚖️", gastoCasa / 2, gastoCasa / 2);
-        let rendaTotal = u1.renda + u2.renda; html += criarCartao("Proporcional à Renda", "Quem ganha mais, paga mais. A divisão é feita com base no salário bruto de cada um.", "📈", gastoCasa * (u1.renda / rendaTotal), gastoCasa * (u2.renda / rendaTotal));
-        let livreTotal = livre1 + livre2; if (livreTotal > 0) { html += criarCartao("Empatia (Balanço Inteligente)", "Foca no que sobrou. Quem está mais sufocado com dívidas pessoais paga uma fatia menor das contas da casa.", "🤝", gastoCasa * (livre1 / livreTotal), gastoCasa * (livre2 / livreTotal)); }
+        let html = htmlPessoais; // Começa com as badges dos gastos individuais
+        html += criarCartao("Divisão 50/50", "Despesas da casa divididas ao meio.", "⚖️", gastoCasa / 2, gastoCasa / 2);
+        
+        // Aqui a regra PROPORCIONAL agora usa a renda LÍQUIDA (renda - gasto pessoal)
+        let forçaTotal = livre1 + livre2; 
+        if (forçaTotal > 0) {
+            html += criarCartao("Proporcional ao Saldo Livre", "Quem tem mais saldo sobrando (após gastos pessoais) assume uma fatia maior da casa.", "📈", gastoCasa * (livre1 / forçaTotal), gastoCasa * (livre2 / forçaTotal));
+        }
+
         let igual1 = (livre1 - livre2 + gastoCasa) / 2; let igual2 = gastoCasa - igual1; if (igual1 < 0) { igual1 = 0; igual2 = gastoCasa; } else if (igual2 < 0) { igual2 = 0; igual1 = gastoCasa; }
-        html += criarCartao("Solidariedade Extrema", "A divisão foca em deixar os dois com o MESMO valor sobrando no bolso no final do mês. Um assume a carga para nivelar o outro.", "❤️", igual1, igual2);
+        html += criarCartao("Solidariedade Extrema", "Nivela o saldo final para que os dois terminem o mês com exatamente a mesma quantia.", "❤️", igual1, igual2);
+        
         container.innerHTML = html;
     }
 
