@@ -466,6 +466,7 @@
     </div>
 
 <script>
+    <script>
     // ==========================================
     // 🛠️ VARIÁVEIS GLOBAIS (ÚNICAS)
     // ==========================================
@@ -580,11 +581,20 @@
 
     function toggleTheme() {
         const isDark = document.body.classList.toggle('dark-mode');
-        document.getElementById('themeToggleBtn').innerHTML = isDark ? '<span>☀️</span><p>Modo Claro</p>' : '<span>🌙</span><p>Modo Escuro</p>';
-        localStorage.setItem('financas_premium_tema', isDark ? 'dark' : 'light'); showToast(isDark ? "🌙 Modo Escuro" : "☀️ Modo Claro"); setTimeout(() => { atualizarTela(); atualizarCaixa(); }, 300); 
+        document.getElementById('themeToggleBtn').innerHTML = isDark ? '☀️' : '🌙';
+        document.getElementById('themeToggleBtn').title = isDark ? 'Modo Claro' : 'Modo Escuro';
+        localStorage.setItem('financas_premium_tema', isDark ? 'dark' : 'light'); 
+        showToast(isDark ? "🌙 Modo Escuro" : "☀️ Modo Claro"); 
+        setTimeout(() => { atualizarTela(); atualizarCaixa(); }, 300); 
     }
     
-    function carregarTema() { if(localStorage.getItem('financas_premium_tema') === 'dark') { document.body.classList.add('dark-mode'); const btn = document.getElementById('themeToggleBtn'); if(btn) btn.innerHTML = '<span>☀️</span><p>Modo Claro</p>'; } }
+    function carregarTema() { 
+        if(localStorage.getItem('financas_premium_tema') === 'dark') { 
+            document.body.classList.add('dark-mode'); 
+            const btn = document.getElementById('themeToggleBtn'); 
+            if(btn) { btn.innerHTML = '☀️'; btn.title = 'Modo Claro'; } 
+        } 
+    }
 
     function trocarAba(idAba, el) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -616,11 +626,26 @@
     // 🛠️ USUÁRIOS E PERFIL
     // ==========================================
     function carregarAvataresSeguros() { const g = document.getElementById('gridAvatares'); for (let i = 1; i <= 20; i++) { let img = document.createElement('img'); img.src = `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${i+20}&backgroundColor=transparent`; img.className = 'avatar-option'; img.onclick = () => selecionarAvatarGrade(img, img.src); g.appendChild(img); } }
+    
     function abrirModal(idx = -1) {
         editIndex = idx; document.getElementById('modalUsuario').classList.add('active'); document.querySelectorAll('.avatar-option').forEach(e => e.classList.remove('selected')); avatarFinalSelecionado = "";
-        if (idx === -1) { document.getElementById('modalTitle').innerText = "Novo Integrante"; document.getElementById('inputNome').value = ""; document.getElementById('inputRenda').value = ""; document.getElementById('previewProfileImg').src = `https://api.dicebear.com/7.x/initials/svg?seed=Novo&backgroundColor=cbd5e1`; document.getElementById('btnExcluir').style.display = 'none'; } 
-        else { let u = usuarios[idx]; document.getElementById('modalTitle').innerText = `Editando: ${u.nome}`; document.getElementById('inputNome').value = u.nome; document.getElementById('inputRenda').value = u.renda.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); avatarFinalSelecionado = u.avatarUrl; document.getElementById('previewProfileImg').src = u.avatarUrl; document.querySelectorAll('.avatar-option').forEach(img => { if(img.src === u.avatarUrl) img.classList.add('selected'); }); document.getElementById('btnExcluir').style.display = 'block'; }
+        if (idx === -1) { 
+            document.getElementById('modalTitle').innerText = "Novo Integrante"; document.getElementById('inputNome').value = ""; document.getElementById('inputRenda').value = ""; document.getElementById('previewProfileImg').src = `https://api.dicebear.com/7.x/initials/svg?seed=Novo&backgroundColor=cbd5e1`; document.getElementById('btnExcluir').style.display = 'none'; 
+        } else { 
+            let u = usuarios[idx]; 
+            let id = u.nome.toLowerCase().replace(/\s+/g, '');
+            let foto = u.avatarUrl === 'local' ? (localStorage.getItem(`foto_${id}`) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.nome)}&backgroundColor=e2e8f0`) : u.avatarUrl;
+            
+            document.getElementById('modalTitle').innerText = `Editando: ${u.nome}`; 
+            document.getElementById('inputNome').value = u.nome; 
+            document.getElementById('inputRenda').value = u.renda.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); 
+            avatarFinalSelecionado = foto; 
+            document.getElementById('previewProfileImg').src = foto; 
+            document.querySelectorAll('.avatar-option').forEach(img => { if(img.src === foto) img.classList.add('selected'); }); 
+            document.getElementById('btnExcluir').style.display = 'block'; 
+        }
     }
+    
     function fecharModal() { document.getElementById('modalUsuario').classList.remove('active'); document.getElementById('fileUpload').value = ""; }
     function selecionarAvatarGrade(el, url) { document.querySelectorAll('.avatar-option').forEach(e => e.classList.remove('selected')); el.classList.add('selected'); avatarFinalSelecionado = url; document.getElementById('previewProfileImg').src = url; }
     function previewFoto(input) { if (input.files && input.files[0]) { const r = new FileReader(); r.onload = e => { avatarFinalSelecionado = e.target.result; document.getElementById('previewProfileImg').src = avatarFinalSelecionado; }; r.readAsDataURL(input.files[0]); } }
@@ -629,16 +654,23 @@
         let n = document.getElementById('inputNome').value.trim(); 
         let r = parseMoeda(document.getElementById('inputRenda').value);
         if (!n || r <= 0) { showToast("Preencha corretamente!"); return; }
+        
         let id = n.toLowerCase().replace(/\s+/g, '');
         let img = avatarFinalSelecionado || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(n)}&backgroundColor=e2e8f0`;
+        
+        // 🚀 O TRUQUE: Salva a foto PESADA só no celular
         localStorage.setItem(`foto_${id}`, img);
+        
+        // Avisa a nuvem apenas que a foto é 'local'
+        let imgParaNuvem = img.startsWith('data:image') ? 'local' : img;
 
         if (editIndex === -1) { 
-            usuarios.push({ nome: n, renda: r, avatarUrl: img }); 
+            usuarios.push({ nome: n, renda: r, avatarUrl: imgParaNuvem }); 
             showToast(`${n} adicionado!`); 
         } else { 
             let nomeAntigo = usuarios[editIndex].nome;
-            usuarios[editIndex] = { nome: n, renda: r, avatarUrl: img }; 
+            usuarios[editIndex] = { nome: n, renda: r, avatarUrl: imgParaNuvem }; 
+            
             let idAntigo = nomeAntigo.toLowerCase().replace(/\s+/g, '');
             if (idAntigo !== id) {
                 let fotoAntiga = localStorage.getItem(`foto_${idAntigo}`);
@@ -650,7 +682,11 @@
             }
             showToast(`Atualizado!`); 
         }
-        avatarFinalSelecionado = null; salvarNoCache(); fecharModal(); atualizarTela(); atualizarCaixa();
+        avatarFinalSelecionado = null; 
+        salvarNoCache(); 
+        fecharModal(); 
+        atualizarTela(); 
+        atualizarCaixa();
     }
     
     function solicitarExclusaoUser() { document.getElementById('textoConfExclusao').innerHTML = `Excluir <strong>${usuarios[editIndex].nome}</strong>?`; document.getElementById('boxBotoesConf').innerHTML = `<div style="display:flex;gap:10px;"><button class="btn-conf btn-no" style="flex:1;" onclick="cancelarExclusao()">Cancelar</button><button class="btn-conf btn-yes" style="flex:1;" onclick="confirmarExclusaoUser()">Sim, excluir</button></div>`; document.getElementById('confModal').classList.add('active'); }
@@ -869,8 +905,12 @@
         if (usuarios.length === 0) { uList.innerHTML += '<p style="color: var(--secondary-text); padding: 10px 0; font-size: 0.9rem;">Nenhum integrante cadastrado.</p>'; } 
         else {
             usuarios.forEach((u, i) => {
+                // 🚀 Puxa a foto do celular se estiver marcado como 'local' na nuvem
+                let id = u.nome.toLowerCase().replace(/\s+/g, '');
+                let foto = u.avatarUrl === 'local' ? (localStorage.getItem(`foto_${id}`) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.nome)}&backgroundColor=e2e8f0`) : u.avatarUrl;
+                
                 let p = Math.round(u.renda > 0 ? (vLiq[i] / u.renda) * 100 : 0);
-                uList.innerHTML += `<div class="user-list-card" onclick="abrirModal(${i})"><img src="${u.avatarUrl}" class="animated-avatar"><div class="user-info"><div class="user-header"><span class="user-name">${u.nome}</span><span class="user-income">${vLiq[i].toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></div><div class="progress-track" title="Restam ${p}%"><div class="progress-fill" style="width: ${p}%; background-color: ${coresPremium[i % coresPremium.length]};"></div></div></div><span class="percent-label">${p}%</span></div>`;
+                uList.innerHTML += `<div class="user-list-card" onclick="abrirModal(${i})"><img src="${foto}" class="animated-avatar"><div class="user-info"><div class="user-header"><span class="user-name">${u.nome}</span><span class="user-income">${vLiq[i].toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></div><div class="progress-track" title="Restam ${p}%"><div class="progress-fill" style="width: ${p}%; background-color: ${coresPremium[i % coresPremium.length]};"></div></div></div><span class="percent-label">${p}%</span></div>`;
             });
         }
         
@@ -881,7 +921,13 @@
         let hora = new Date().getHours(); let saudacaoText = hora < 12 ? "☀️ Bom dia" : hora < 18 ? "☕ Boa tarde" : "🌙 Boa noite";
         let dono = usuarios.length > 0 ? usuarios[0] : null;
         document.getElementById('saudacaoHeader').innerHTML = `${saudacaoText}, <strong>${dono ? dono.nome : "Visitante"}</strong>!`;
-        if (dono) document.getElementById('avatarHeader').src = dono.avatarUrl;
+        
+        if (dono) {
+            // 🚀 Puxa a foto do dono da mesma forma
+            let idDono = dono.nome.toLowerCase().replace(/\s+/g, '');
+            let fotoDono = dono.avatarUrl === 'local' ? (localStorage.getItem(`foto_${idDono}`) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(dono.nome)}&backgroundColor=e2e8f0`) : dono.avatarUrl;
+            document.getElementById('avatarHeader').src = fotoDono;
+        }
 
         let banner = document.getElementById('oraculoBanner');
         if (usuarios.length > 0) {
