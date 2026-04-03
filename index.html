@@ -1787,28 +1787,67 @@
         document.getElementById('emojiGridBox').style.display = 'none'; // Fecha a caixa
     }
   
-  // =======================================================
-    // --- ☁️ MOTOR DA NUVEM (FIREBASE) E 🔔 NOTIFICAÇÕES ---
-    // =======================================================
-    const firebaseConfig = {
-      apiKey: "AIzaSyBYfTNSUcUillOUHH3Xso_66qJ0Y0g9rWg",
-      authDomain: "guia-bolso-dc217.firebaseapp.com",
-      projectId: "guia-bolso-dc217",
-      storageBucket: "guia-bolso-dc217.firebasestorage.app",
-      messagingSenderId: "1099448847704",
-      appId: "1:1099448847704:web:33ccdfe4f01e5b23ef292d"
-    };
-    
-    // Inicia a Nuvem
-  function iniciarApp() {
+ // =======================================================
+// --- ☁️ MOTOR DA NUVEM (FIREBASE) E 🔔 NOTIFICAÇÕES ---
+// =======================================================
 
-    const db = firebase.firestore();
+const firebaseConfig = {
+  apiKey: "AIzaSyBYfTNSUcUillOUHH3Xso_66qJ0Y0g9rWg",
+  authDomain: "guia-bolso-dc217.firebaseapp.com",
+  projectId: "guia-bolso-dc217",
+  storageBucket: "guia-bolso-dc217.firebasestorage.app",
+  messagingSenderId: "1099448847704",
+  appId: "1:1099448847704:web:33ccdfe4f01e5b23ef292d"
+};
+
+// 🔥 INICIA O FIREBASE PRIMEIRO
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore();
+
+// =======================================================
+// 🔔 NOTIFICAÇÕES PUSH (FIREBASE)
+// =======================================================
+
+async function iniciarNotificacoes() {
+  try {
+    const permissao = await Notification.requestPermission();
+
+    if (permissao !== "granted") {
+      console.log("Permissão de notificação negada.");
+      return;
+    }
+
+    const messaging = firebase.messaging();
+
+    const token = await messaging.getToken({
+      vapidKey: "BIvSshhBpe7qbCZ7mpXk4Ng5LDKg3IYQWXSyTO2yViB7U-PzqJtWAxMqdVUkHV-X5H5E6I5kH7h1DFPZd5XAQGM"
+    });
+
+    console.log("TOKEN:", token);
+
+    if (token) {
+      await db.collection("tokens").doc(token).set({
+        token: token
+      });
+    }
+
+  } catch (erro) {
+    console.log("Erro nas notificações:", erro);
+  }
+}
+
+// =======================================================
+// ☁️ SINCRONIZAÇÃO COM FIREBASE
+// =======================================================
+
+function iniciarApp() {
     const cofreRef = db.collection("guiabolso").doc("bancodedados");
     let isAppIniciado = false;
 
-    // 1. ESCUTA A NUVEM EM TEMPO REAL
     cofreRef.onSnapshot((doc) => {
         if (doc.exists) {
+
             let dadosNuvem = doc.data();
             let qtdTransacoesAntigas = transacoes.length;
 
@@ -1817,14 +1856,14 @@
             projetos = dadosNuvem.projetos || [];
 
             if (isAppIniciado && transacoes.length > qtdTransacoesAntigas) {
-                dispararNotificacao("💰 Guia Bolso", "Alguém acabou de fazer um novo lançamento!");
+                dispararNotificacao("💰 Guia Bolso", "Novo lançamento recebido!");
             }
 
             atualizarCaixa();
             atualizarTela();
             renderizarProjetos();
-            
-            if(!isAppIniciado) {
+
+            if (!isAppIniciado) {
                 isAppIniciado = true;
                 verificarVencimentos();
             }
@@ -1835,71 +1874,80 @@
         }
     });
 
-    // 2. SALVA NA NUVEM
     function salvarNaNuvem() {
-        if(!isAppIniciado) return;
-        cofreRef.set({ usuarios: usuarios, transacoes: transacoes, projetos: projetos });
+        if (!isAppIniciado) return;
+
+        cofreRef.set({
+            usuarios: usuarios,
+            transacoes: transacoes,
+            projetos: projetos
+        });
     }
 
-    // 3. INTERCEPTA LOCALSTORAGE
+    // intercepta localStorage
     const originalSetItem = localStorage.setItem;
     localStorage.setItem = function(key, value) {
         originalSetItem.apply(this, arguments);
-        if(key.includes('financas_premium_')) salvarNaNuvem();
-    };
 
+        if (key.includes('financas_premium_')) {
+            salvarNaNuvem();
+        }
+    };
 }
 
-    // 3. INTERCEPTA O LOCALSTORAGE (Mágica para não precisar reescrever o código todo)
-    const originalSetItem = localStorage.setItem;
-    localStorage.setItem = function(key, value) {
-        originalSetItem.apply(this, arguments); // Salva no cache por garantia
-        if(key.includes('financas_premium_')) salvarNaNuvem(); // Manda pra nuvem na mesma hora!
-    };
+// =======================================================
+// 🔔 NOTIFICAÇÃO LOCAL (SOM + ALERTA)
+// =======================================================
 
-    // 4. SISTEMA DE NOTIFICAÇÕES
-    function pedirPermissaoNotificacao() {
-        if ("Notification" in window) {
-            Notification.requestPermission().then(permissao => {
-                if (permissao === "granted") {
-                    showToast("🔔 Notificações ativadas!");
-                    verificarVencimentos();
-                } else {
-                    showToast("Permissão de notificação negada.");
-                }
-            });
-        }
-    }
+function dispararNotificacao(titulo, mensagem) {
+    if ("Notification" in window && Notification.permission === "granted") {
 
-    function dispararNotificacao(titulo, mensagem) {
-        if ("Notification" in window && Notification.permission === "granted") {
-            // 1. Mostra a mensagem visual na tela do PC/Celular
-            new Notification(titulo, { body: mensagem, icon: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=Money" });
-            
-            // 2. Força o "Plim!" sonoro agradável (estilo Nubank) a tocar
-            try {
-                // Link de um som gratuito e suave de notificação
-                let som = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-                som.play().catch(err => console.log("O navegador silenciou o som por segurança.", err));
-            } catch(e) {}
-        }
-    }
-
-    function verificarVencimentos() {
-        let hoje = new Date(); hoje.setHours(0,0,0,0);
-        let d2 = new Date(hoje); d2.setDate(hoje.getDate() + 2); // Avisa com 2 dias de antecedência
-
-        let vencendo = transacoes.filter(tx => {
-            if(tx.tipo !== 'despesa') return false;
-            let [a, m, d] = tx.data.split('-').map(Number);
-            let dtTx = new Date(a, m - 1, d);
-            return dtTx >= hoje && dtTx <= d2;
+        new Notification(titulo, {
+            body: mensagem,
+            icon: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=Money"
         });
 
-        if (vencendo.length > 0) {
-            dispararNotificacao("⚠️ Contas Vencendo!", `Você tem ${vencendo.length} conta(s) para pagar entre hoje e amanhã!`);
-        }
+        try {
+            let som = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+            som.play().catch(() => {});
+        } catch (e) {}
     }
+}
+
+// =======================================================
+// ⚠️ ALERTA DE VENCIMENTO
+// =======================================================
+
+function verificarVencimentos() {
+    let hoje = new Date();
+    hoje.setHours(0,0,0,0);
+
+    let d2 = new Date(hoje);
+    d2.setDate(hoje.getDate() + 2);
+
+    let vencendo = transacoes.filter(tx => {
+        if(tx.tipo !== 'despesa') return false;
+
+        let [a, m, d] = tx.data.split('-').map(Number);
+        let dtTx = new Date(a, m - 1, d);
+
+        return dtTx >= hoje && dtTx <= d2;
+    });
+
+    if (vencendo.length > 0) {
+        dispararNotificacao(
+            "⚠️ Contas Vencendo!",
+            `Você tem ${vencendo.length} conta(s) próximas do vencimento!`
+        );
+    }
+}
+
+// =======================================================
+// 🚀 INICIALIZAÇÃO FINAL
+// =======================================================
+
+iniciarApp();
+iniciarNotificacoes();
     
     const SENHA_SECRETA = "Loloelili12#"; // ⬅️ TROQUE POR UMA SENHA QUE SÓ VOCÊS SAIBAM!
 
