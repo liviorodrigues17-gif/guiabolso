@@ -1,5 +1,5 @@
-importScripts("https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js");
-importScripts("https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging-compat.js");
 
 firebase.initializeApp({
   apiKey: "AIzaSyBYfTNSUcUillOUHH3Xso_66qJ0Y0g9rWg",
@@ -11,11 +11,5 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-messaging.onBackgroundMessage(function(payload) {
-
-  self.registration.showNotification(payload.notification.title, {
-    body: payload.notification.body,
-    icon: "/guiabolso/icon-192.png"
-  });
-
-});
+// O Firebase agora cuida de tudo sozinho no background
+// Ele vai ler o "webpush" que mandamos do backend e disparar com prioridade máxima e vibração!
