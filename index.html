@@ -6,7 +6,7 @@
     <title>GUIA DO BOLSO</title>
     
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#22c55e">
+    <meta name="theme-color" content="#5c2092">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
 
@@ -15,26 +15,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
+    
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging-compat.js"></script>
     
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker Registrado!'))
+                .catch(err => console.log('Erro no Service Worker:', err));
+            });
+        }
+    </script>
+
     <style>
         :root { --primary: #5c2092; --primary-dark: #3b1063; --bg: #f4f5f9; --card: #ffffff; --text: #1c1c1e; --secondary-text: #6e6e73; --green: #22c55e; --red: #ef4444; --input-bg: #f3f4f6; --chart-empty: #e5e7eb; --border-hover: #e2e8f0; --nav-bg: #ffffff; }
-        body.dark-mode { 
-            --bg: #0f172a; 
-            --card: #1e293b; 
-            --text: #f8fafc; 
-            --secondary-text: #cbd5e1;
-            --input-bg: #334155; 
-            --chart-empty: #334155; 
-            --border-hover: #475569; 
-            --nav-bg: #1e293b; 
-            --primary: #a855f7;
-            --primary-dark: #9333ea; 
-            --red: #f87171;
-            --green: #4ade80;
-        }
+        body.dark-mode { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --secondary-text: #cbd5e1; --input-bg: #334155; --chart-empty: #334155; --border-hover: #475569; --nav-bg: #1e293b; --primary: #a855f7; --primary-dark: #9333ea; --red: #f87171; --green: #4ade80; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; transition: 0.3s; }
         .app-container { width: 100%; max-width: 1400px; margin: 0 auto; position: relative; padding-bottom: 90px; min-height: 100vh; }
@@ -49,12 +48,7 @@
         .header-linha { width: 2px; height: 30px; background: rgba(255,255,255,0.2); margin: 0 5px; }
         .avatar-header { width: 55px; height: 55px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.4); box-shadow: 0 4px 15px rgba(0,0,0,0.2); object-fit: cover; cursor: pointer; transition: 0.2s; }
 
-        @media (max-width: 768px) {
-            .premium-header { flex-direction: column; text-align: center; gap: 20px; padding: 30px 20px 60px; }
-            .header-textos h1 { font-size: 1.4rem; }
-            .header-textos h2 { font-size: 0.85rem; }
-            .header-botoes { justify-content: center; width: 100%; }
-        }
+        @media (max-width: 768px) { .premium-header { flex-direction: column; text-align: center; gap: 20px; padding: 30px 20px 60px; } .header-textos h1 { font-size: 1.4rem; } .header-textos h2 { font-size: 0.85rem; } .header-botoes { justify-content: center; width: 100%; } }
         
         .tab-content { display: none !important; animation: fadeIn 0.3s ease; } .tab-content.active { display: block !important; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -64,11 +58,7 @@
         .main-container { max-width: 1200px; margin: -30px auto 0 auto; width: 100%; padding: 0 20px; }
         .dashboard-columns { display: flex; gap: 20px; width: 100%; align-items: flex-start; }
         .dashboard-col { flex: 1; min-width: 0; }
-
-        @media (max-width: 768px) { 
-            .dashboard-columns { flex-direction: column; align-items: stretch; } 
-            .dashboard-col { width: 100% !important; }
-        }
+        @media (max-width: 768px) { .dashboard-columns { flex-direction: column; align-items: stretch; } .dashboard-col { width: 100% !important; } }
   
         .widget-item { position: relative; background: var(--card); border-radius: 20px; padding: 25px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; transition: 0.3s; border: 2px solid transparent; width: 100%; }
         .widget-add-btn { background: transparent !important; box-shadow: none !important; padding: 5px 0 !important; display: flex; align-items: flex-end; justify-content: flex-end; }
@@ -114,17 +104,7 @@
         .edit-mode-banner { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--green); color: white; padding: 12px 24px; border-radius: 30px; font-weight: 600; z-index: 4000; box-shadow: 0 5px 20px rgba(34, 197, 94, 0.4); cursor: pointer; transition: 0.2s; } body.edit-mode .edit-mode-banner { display: flex; align-items: center; gap: 10px; animation: fadeIn 0.3s; } .edit-mode-banner:hover { background: #16a34a; transform: translateX(-50%) scale(1.05); }
         .bottom-nav { position: fixed; background: var(--nav-bg); z-index: 1000; transition: 0.3s; box-shadow: 0 4px 20px rgba(0,0,0,0.1); display: flex;} .nav-divider { background: var(--chart-empty); }
         
-        @media (max-width: 767px) { 
-            .app-container { padding-bottom: 80px; } 
-            .bottom-nav { bottom: 0; left: 0; width: 100%; justify-content: center; padding: 10px 15px 15px; border-top-left-radius: 20px; border-top-right-radius: 20px; overflow-x: auto; gap: 15px; } 
-            .bottom-nav::-webkit-scrollbar { height: 4px; } 
-            .bottom-nav::-webkit-scrollbar-thumb { background: var(--chart-empty); border-radius: 10px; } 
-            .nav-group { display: flex; gap: 15px; justify-content: center; width: 100%; } 
-            .nav-divider { width: 2px; height: 30px; margin: auto 5px; } 
-            .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--secondary-text); font-size: 0.75rem; cursor: pointer; min-width: 60px; white-space: nowrap; } 
-            .nav-item.active { color: var(--primary); font-weight: 600; } 
-            .nav-item span { font-size: 1.5rem; margin-bottom: 2px; } 
-        }
+        @media (max-width: 767px) { .app-container { padding-bottom: 80px; } .bottom-nav { bottom: 0; left: 0; width: 100%; justify-content: center; padding: 10px 15px 15px; border-top-left-radius: 20px; border-top-right-radius: 20px; overflow-x: auto; gap: 15px; } .bottom-nav::-webkit-scrollbar { height: 4px; } .bottom-nav::-webkit-scrollbar-thumb { background: var(--chart-empty); border-radius: 10px; } .nav-group { display: flex; gap: 15px; justify-content: center; width: 100%; } .nav-divider { width: 2px; height: 30px; margin: auto 5px; } .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--secondary-text); font-size: 0.75rem; cursor: pointer; min-width: 60px; white-space: nowrap; } .nav-item.active { color: var(--primary); font-weight: 600; } .nav-item span { font-size: 1.5rem; margin-bottom: 2px; } }
         @media (min-width: 768px) { .app-container { padding-left: 90px; padding-bottom: 30px; } .bottom-nav { top: 50%; left: 15px; bottom: auto; transform: translateY(-50%); width: 75px; height: auto; border-radius: 20px; padding: 20px 0; flex-direction: column; overflow: hidden; align-items: center; } .bottom-nav:hover { width: 230px; align-items: stretch; } .nav-group { display: flex; flex-direction: column; gap: 10px; width: 100%; } .nav-divider { width: 70%; height: 2px; margin: 15px auto; transition: 0.3s; flex-shrink: 0;} .bottom-nav:hover .nav-divider { width: 90%; } .nav-item { display: flex; flex-direction: row; align-items: center; padding: 12px 20px; color: var(--secondary-text); cursor: pointer; transition: 0.2s; white-space: nowrap; width: 100%;} .nav-item:hover { background: var(--input-bg); color: var(--primary); } .nav-item.active { color: var(--primary); font-weight: 600; border-left: 4px solid var(--primary); padding-left: 16px; } .nav-item span { font-size: 1.5rem; min-width: 35px; text-align: center;} .nav-item p { font-size: 0.95rem; font-weight: 500; opacity: 0; transition: 0.3s; margin: 0; margin-left: 10px;} .bottom-nav:hover .nav-item p { opacity: 1; } }
         
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 2000; justify-content: center; align-items: center; } .modal-overlay.active { display: flex; animation: fadeIn 0.2s; }
@@ -212,22 +192,19 @@
             <h2 style="margin-bottom: 1rem;">🔐 Guia Bolso Casal</h2>
             <p style="color: #94a3b8; margin-bottom: 1.5rem;">Identifique-se para acessar as finanças</p>
             
-            <select id="loginUsuario" style="width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 1px solid #334155; margin-bottom: 1rem; font-size: 16px;">
-                <option value="Livio">Lívio</option>
-                <option value="Lorraine">Lorraine</option>
-            </select>
+            <input type="email" id="loginEmail" autocomplete="username" placeholder="Digite seu e-mail" style="width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 1px solid #334155; margin-bottom: 1rem; box-sizing: border-box; font-size: 16px;">
             
-            <input type="password" id="loginSenha" placeholder="Digite a senha secreta" style="width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 1px solid #334155; margin-bottom: 1.5rem; box-sizing: border-box; font-size: 16px;">
+            <input type="password" id="loginSenha" autocomplete="current-password" placeholder="Digite a senha" style="width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 1px solid #334155; margin-bottom: 1.5rem; box-sizing: border-box; font-size: 16px;">
             
             <button onclick="verificarAcesso()" style="width: 100%; padding: 12px; border-radius: 10px; background: #22c55e; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-bottom: 10px;">
-                Entrar com Senha
+                Entrar Seguramente
             </button>
             
             <button onclick="usarBiometria()" style="width: 100%; padding: 12px; border-radius: 10px; background: #3b82f6; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">
                 👆 Usar Impressão Digital
             </button>
             
-            <p id="erroLogin" style="color: #ef4444; margin-top: 1rem; font-size: 14px; display: none;">Senha incorreta! Tente novamente.</p>
+            <p id="erroLogin" style="color: #ef4444; margin-top: 1rem; font-size: 14px; display: none;">E-mail ou senha incorretos!</p>
         </div>
     </div>
     
@@ -481,7 +458,7 @@
     let sortables = [];
 
     // ==========================================
-    // ☁️ FIREBASE (INICIALIZAÇÃO ÚNICA)
+    // ☁️ FIREBASE (INICIALIZAÇÃO)
     // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyBYfTNSUcUillOUHH3Xso_66qJ0Y0g9rWg",
@@ -494,10 +471,25 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-
+    
+    // 🛡️ O GUARDIÃO DA SESSÃO (Login Automático)
+    firebase.auth().onAuthStateChanged((user) => {
+        const overlay = document.getElementById('loginOverlay');
+        if (user) {
+            // O usuário já logou antes! Abre a porta direto.
+            let usuarioSelecionado = user.email.toLowerCase().includes("livio") ? "Livio" : "Lorraine";
+            sessionStorage.setItem('usuarioLogado', usuarioSelecionado);
+            if (overlay) overlay.style.display = 'none';
+        } else {
+            // Ninguém logado. Mostra a tela preta.
+            if (overlay) overlay.style.display = 'flex';
+        }
+    });
+    
     function iniciarApp() {
         const cofreRef = db.collection("guiabolso").doc("bancodedados");
         let isAppIniciado = false;
+        const originalSetItem = localStorage.setItem;
 
         cofreRef.onSnapshot((doc) => {
             if (doc.exists) {
@@ -508,8 +500,15 @@
                 transacoes = dadosNuvem.transacoes || [];
                 projetos = dadosNuvem.projetos || [];
 
+                // Salva no cache local silenciosamente sem acionar o trigger do Nuvem de volta
+                originalSetItem.call(localStorage, 'financas_premium_dados', JSON.stringify(usuarios));
+                originalSetItem.call(localStorage, 'financas_premium_transacoes', JSON.stringify(transacoes));
+                originalSetItem.call(localStorage, 'financas_premium_projetos', JSON.stringify(projetos));
+
                 if (isAppIniciado && transacoes.length > qtdTransacoesAntigas) {
-                    dispararNotificacao("💰 Guia Bolso", "Novo lançamento recebido!");
+                    const ultimaTx = transacoes[0]; 
+                    showToast(`Novo lançamento: ${ultimaTx.descricao} de ${ultimaTx.valor.toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}`);
+                    try { let som = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); som.play().catch(() => {}); } catch(e){}
                 }
 
                 atualizarCaixa();
@@ -531,24 +530,30 @@
             cofreRef.set({ usuarios: usuarios, transacoes: transacoes, projetos: projetos });
         }
 
-        const originalSetItem = localStorage.setItem;
         localStorage.setItem = function(key, value) {
             originalSetItem.apply(this, arguments);
             if (key.includes('financas_premium_')) salvarNaNuvem();
         };
+
+        // O Desfibrilador (Atualiza instantâneo quando acende a tela)
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") {
+                db.disableNetwork().then(() => db.enableNetwork());
+            }
+        });
     }
 
     // ==========================================
-    // 🔔 NOTIFICAÇÕES (ÚNICAS)
+    // 🔔 NOTIFICAÇÕES
     // ==========================================
     async function iniciarNotificacoes() {
       try {
         const permissao = await Notification.requestPermission();
         if (permissao !== "granted") { console.log("Permissão negada"); return; }
-        const registration = await navigator.serviceWorker.register("firebase-messaging-sw.js");
+        const registration = await navigator.serviceWorker.register("sw.js");
         const messaging = firebase.messaging();
         const token = await messaging.getToken({ vapidKey: "BIvSshhBpe7qbCZ7mpXk4Ng5LDKg3IYQWXSyTO2yViB7U-PzqJtWAxMqdVUkHV-X5H5E6I5kH7h1DFPZd5XAQGM", serviceWorkerRegistration: registration });
-        if (token) { await db.collection("tokens").doc(token).set({ token }); }
+        if (token) { await db.collection("tokens").doc(token).set({ token }); showToast("Notificações Ativadas!");}
       } catch (erro) { console.log("Erro notificações:", erro); }
     }
 
@@ -657,10 +662,7 @@
         let id = n.toLowerCase().replace(/\s+/g, '');
         let img = avatarFinalSelecionado || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(n)}&backgroundColor=e2e8f0`;
         
-        // 🚀 O TRUQUE: Salva a foto PESADA só no celular
         localStorage.setItem(`foto_${id}`, img);
-        
-        // Avisa a nuvem apenas que a foto é 'local'
         let imgParaNuvem = img.startsWith('data:image') ? 'local' : img;
 
         if (editIndex === -1) { 
@@ -769,13 +771,38 @@
         if (!transacaoPendente) return;
         let { tipo, desc, vInput, cat, dt, rep, par } = transacaoPendente;
         
+        const agora = new Date();
+        const horaAtual = agora.getHours().toString().padStart(2, '0') + ":" + agora.getMinutes().toString().padStart(2, '0');
+
         if (editTxIndex === -1) {
             let [a, m, d] = dt.split('-').map(Number); let gId = Date.now().toString(); let qtdMeses = 1; let vParcela = vInput;
             if (rep === 'parcelada') { qtdMeses = par; vParcela = vInput / qtdMeses; } else if (rep === 'fixa') { qtdMeses = 120; vParcela = vInput; } 
-            for (let i = 1; i <= qtdMeses; i++) { let dPar = desc; if (rep === 'parcelada') dPar = `${desc} (${i}/${qtdMeses})`; let mesAlvo = (m - 1) + (i - 1); let dtTemp = new Date(a, mesAlvo, 1); let aF = dtTemp.getFullYear(); let mF = dtTemp.getMonth(); let uDia = new Date(aF, mF + 1, 0).getDate(); let dSeg = Math.min(d, uDia); transacoes.push({ groupId: gId, tipo: tipo, descricao: dPar, valor: vParcela, categoria: cat, data: `${aF}-${String(mF + 1).padStart(2, '0')}-${String(dSeg).padStart(2, '0')}` }); }
+            for (let i = 1; i <= qtdMeses; i++) { 
+                let dPar = desc; if (rep === 'parcelada') dPar = `${desc} (${i}/${qtdMeses})`; let mesAlvo = (m - 1) + (i - 1); let dtTemp = new Date(a, mesAlvo, 1); let aF = dtTemp.getFullYear(); let mF = dtTemp.getMonth(); let uDia = new Date(aF, mF + 1, 0).getDate(); let dSeg = Math.min(d, uDia); 
+                transacoes.push({ groupId: gId, tipo: tipo, descricao: dPar, valor: vParcela, categoria: cat, data: `${aF}-${String(mF + 1).padStart(2, '0')}-${String(dSeg).padStart(2, '0')}`, hora: horaAtual }); 
+            }
+            
+            // --- NOTIFICAÇÃO ESTILO CARTÃO DE CRÉDITO ---
+            let nomeLogado = sessionStorage.getItem('usuarioLogado') || "Alguém";
+            let valorFmt = vInput.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+            let dataFmt = dt.split('-').reverse().join('/');
+            let acao = tipo === 'despesa' ? "gastou" : "recebeu";
+            let icone = tipo === 'despesa' ? "💳" : "💰";
+            let catLimpa = cat.replace('Pessoal - ', '').replace('Casa - ', '');
+            let tagTipo = cat.startsWith('Casa') ? "🏠 Casa" : "👤 Pessoal";
+
+            let tituloPush = `${icone} ${nomeLogado} ${acao} ${valorFmt}`;
+            let mensagemPush = `${catLimpa} (${tagTipo}) • ${desc} • ${dataFmt}`;
+
+            db.collection("notificacoes").add({
+                titulo: tituloPush,
+                mensagem: mensagemPush, 
+                criadoEm: Date.now()
+            });
+
             showToast(rep === 'unica' ? "Salvo!" : (rep === 'fixa' ? "Conta Fixa gerada por 10 anos!" : `${qtdMeses} parcelas geradas!`));
         } else { 
-            let tx = transacoes[editTxIndex]; tx.tipo = tipo; tx.descricao = desc; tx.valor = vInput; tx.categoria = cat; tx.data = dt; showToast("Atualizado!"); 
+            let tx = transacoes[editTxIndex]; tx.tipo = tipo; tx.descricao = desc; tx.valor = vInput; tx.categoria = cat; tx.data = dt; tx.hora = horaAtual; showToast("Atualizado!"); 
         }
         
         transacoes.sort((a, b) => new Date(b.data) - new Date(a.data)); localStorage.setItem('financas_premium_transacoes', JSON.stringify(transacoes));
@@ -861,7 +888,7 @@
         txs.forEach((tx) => {
             let iReal = transacoes.indexOf(tx); let dFmt = tx.data.split('-').reverse().join('/'); let isRec = tx.tipo === 'receita';
             let htmlD = ""; if (dFmt !== dAnt) { htmlD = `<span class="timeline-date-label">${dFmt}</span>`; dAnt = dFmt; }
-            lista.innerHTML += `<div class="timeline-item"><div class="timeline-dot" style="background: ${isRec ? 'var(--green)' : 'var(--primary)'};"></div>${htmlD}<div class="transaction-card" style="margin-bottom: 0;"><div class="tx-left"><div class="tx-icon">${isRec ? '💰' : (tx.categoria.startsWith('Casa') ? '🏠' : '👤')}</div><div class="tx-info-box"><span class="tx-title">${tx.descricao}</span><div class="tx-meta"><span class="tx-badge ${tx.categoria.startsWith('Casa') ? 'casa' : 'pessoal'}">${tx.categoria.replace('Casa - ', '').replace('Pessoal - ', '')}</span></div></div></div><div class="tx-right"><span class="tx-value ${isRec ? 'receita' : 'despesa'}">${isRec ? '+' : '-'} ${tx.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span><div class="tx-actions"><button class="btn-action-tx edit" onclick="abrirModalTransacao(${iReal})" title="Editar">✏️</button><button class="btn-action-tx delete" onclick="solicitarExclusaoTx(${iReal})" title="Excluir">🗑️</button></div></div></div></div>`;
+            lista.innerHTML += `<div class="timeline-item"><div class="timeline-dot" style="background: ${isRec ? 'var(--green)' : 'var(--primary)'};"></div>${htmlD}<div class="transaction-card" style="margin-bottom: 0;"><div class="tx-left"><div class="tx-icon">${isRec ? '💰' : (tx.categoria.startsWith('Casa') ? '🏠' : '👤')}</div><div class="tx-info-box"><span class="tx-title">${tx.descricao} <small style="opacity:0.5; font-size:0.7rem; font-weight:normal;">(${tx.hora || '--:--'})</small></span><div class="tx-meta"><span class="tx-badge ${tx.categoria.startsWith('Casa') ? 'casa' : 'pessoal'}">${tx.categoria.replace('Casa - ', '').replace('Pessoal - ', '')}</span></div></div></div><div class="tx-right"><span class="tx-value ${isRec ? 'receita' : 'despesa'}">${isRec ? '+' : '-'} ${tx.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span><div class="tx-actions"><button class="btn-action-tx edit" onclick="abrirModalTransacao(${iReal})" title="Editar">✏️</button><button class="btn-action-tx delete" onclick="solicitarExclusaoTx(${iReal})" title="Excluir">🗑️</button></div></div></div></div>`;
         });
     }
 
@@ -904,10 +931,8 @@
         if (usuarios.length === 0) { uList.innerHTML += '<p style="color: var(--secondary-text); padding: 10px 0; font-size: 0.9rem;">Nenhum integrante cadastrado.</p>'; } 
         else {
             usuarios.forEach((u, i) => {
-                // 🚀 Puxa a foto do celular se estiver marcado como 'local' na nuvem
                 let id = u.nome.toLowerCase().replace(/\s+/g, '');
                 let foto = u.avatarUrl === 'local' ? (localStorage.getItem(`foto_${id}`) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.nome)}&backgroundColor=e2e8f0`) : u.avatarUrl;
-                
                 let p = Math.round(u.renda > 0 ? (vLiq[i] / u.renda) * 100 : 0);
                 uList.innerHTML += `<div class="user-list-card" onclick="abrirModal(${i})"><img src="${foto}" class="animated-avatar"><div class="user-info"><div class="user-header"><span class="user-name">${u.nome}</span><span class="user-income">${vLiq[i].toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></div><div class="progress-track" title="Restam ${p}%"><div class="progress-fill" style="width: ${p}%; background-color: ${coresPremium[i % coresPremium.length]};"></div></div></div><span class="percent-label">${p}%</span></div>`;
             });
@@ -918,11 +943,13 @@
 
     function atualizarDashboardPremium() {
         let hora = new Date().getHours(); let saudacaoText = hora < 12 ? "☀️ Bom dia" : hora < 18 ? "☕ Boa tarde" : "🌙 Boa noite";
-        let dono = usuarios.length > 0 ? usuarios[0] : null;
+        
+        let nomeLogado = sessionStorage.getItem('usuarioLogado');
+        let dono = usuarios.find(u => u.nome === nomeLogado) || (usuarios.length > 0 ? usuarios[0] : null);
+
         document.getElementById('saudacaoHeader').innerHTML = `${saudacaoText}, <strong>${dono ? dono.nome : "Visitante"}</strong>!`;
         
         if (dono) {
-            // 🚀 Puxa a foto do dono da mesma forma
             let idDono = dono.nome.toLowerCase().replace(/\s+/g, '');
             let fotoDono = dono.avatarUrl === 'local' ? (localStorage.getItem(`foto_${idDono}`) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(dono.nome)}&backgroundColor=e2e8f0`) : dono.avatarUrl;
             document.getElementById('avatarHeader').src = fotoDono;
@@ -957,22 +984,6 @@
                 ultimas.forEach(tx => {
                     let isRec = tx.tipo === 'receita'; let icone = isRec ? '💰' : (tx.categoria.startsWith('Casa') ? '🏠' : '👤');
                     ultContainer.innerHTML += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-hover);"><div style="display: flex; gap: 10px; align-items: center; overflow: hidden;"><div style="width: 36px; height: 36px; border-radius: 10px; background: var(--input-bg); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">${icone}</div><div style="display: flex; flex-direction: column; overflow: hidden;"><span style="font-size: 0.95rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${tx.descricao}</span><span style="font-size: 0.75rem; color: var(--secondary-text);">${tx.data.split('-').reverse().join('/')}</span></div></div><span style="font-weight: 700; font-size: 0.95rem; color: ${isRec ? 'var(--green)' : 'var(--text)'};">${isRec ? '+' : '-'} ${tx.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></div>`;
-                });
-            }
-        }
-
-        let vencContainer = document.getElementById('vencimentosContainer');
-        if (vencContainer) {
-            let hoje = new Date(); hoje.setHours(0,0,0,0); let d7 = new Date(hoje); d7.setDate(hoje.getDate() + 7);
-            let vencendo = transacoes.filter(tx => { if(tx.tipo !== 'despesa') return false; let [a, m, d] = tx.data.split('-').map(Number); let dtTx = new Date(a, m - 1, d); return dtTx >= hoje && dtTx <= d7; }).sort((a,b) => new Date(a.data) - new Date(b.data)).slice(0, 4);
-            if (vencendo.length === 0) { vencContainer.innerHTML = '<div style="display: flex; gap: 10px; padding: 15px; background: rgba(34, 197, 94, 0.1); border-radius: 12px; color: var(--green); font-weight: 600; font-size: 0.9rem;">✅ Nada vencendo nos próximos 7 dias!</div>'; } 
-            else {
-                vencContainer.innerHTML = '';
-                vencendo.forEach(tx => {
-                    let [a, m, d] = tx.data.split('-').map(Number); let dtTx = new Date(a, m - 1, d); let dias = Math.ceil((dtTx.getTime() - hoje.getTime()) / (1000 * 3600 * 24));
-                    let txtDias = dias === 0 ? "Vence HOJE" : (dias === 1 ? "Vence amanhã" : `Vence em ${dias} dias`);
-                    let corBg = dias <= 1 ? 'rgba(239, 68, 68, 0.1)' : 'var(--input-bg)'; let corTxt = dias <= 1 ? 'var(--red)' : 'var(--text)';
-                    vencContainer.innerHTML += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-radius: 12px; background: ${corBg}; margin-bottom: 8px;"><div style="display: flex; flex-direction: column; overflow: hidden; flex: 1; margin-right: 10px;"><span style="font-size: 0.95rem; font-weight: 600; color: ${corTxt}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${tx.descricao}</span><span style="font-size: 0.75rem; color: var(--secondary-text); font-weight: 600;">${txtDias}</span></div><span style="font-weight: 700; font-size: 0.95rem; color: ${corTxt};">${tx.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></div>`;
                 });
             }
         }
@@ -1123,8 +1134,6 @@
     // =======================================================
     // 🚀 INICIALIZAÇÃO FINAL, LOGIN E RESET
     // =======================================================
-    const SENHA_SECRETA = "Loloelili12#";
-
     iniciarApp();
 
     if (sessionStorage.getItem('acessoGarantido') === 'true') {
@@ -1132,29 +1141,45 @@
     }
 
     function verificarAcesso() {
+        const emailDigitado = document.getElementById('loginEmail').value.trim();
         const senhaDigitada = document.getElementById('loginSenha').value;
-        const usuarioSelecionado = document.getElementById('loginUsuario').value;
         const erroMsg = document.getElementById('erroLogin');
 
-        if (senhaDigitada === SENHA_SECRETA) {
+        firebase.auth().signInWithEmailAndPassword(emailDigitado, senhaDigitada)
+        .then((userCredential) => {
+            let usuarioSelecionado = emailDigitado.toLowerCase().includes("livio") ? "Livio" : "Lorraine";
             sessionStorage.setItem('acessoGarantido', 'true');
             sessionStorage.setItem('usuarioLogado', usuarioSelecionado);
             document.getElementById('loginOverlay').style.display = 'none';
+
             const sexo = localStorage.getItem(`sexo_${usuarioSelecionado}`) || 'M';
             let saudacao = sexo === 'F' ? 'Bem-vinda' : 'Bem-vindo';
             showToast(`${saudacao}, ${usuarioSelecionado}!`);
-        } else {
-            erroMsg.style.display = 'block'; document.getElementById('loginSenha').value = '';
-        }
+        })
+        .catch((error) => {
+            erroMsg.style.display = 'block';
+            erroMsg.innerText = "E-mail ou senha incorretos!";
+            document.getElementById('loginSenha').value = '';
+        });
     }
 
     const inputSenha = document.getElementById('loginSenha');
     if (inputSenha) { inputSenha.addEventListener('keypress', function (e) { if (e.key === 'Enter') verificarAcesso(); }); }
 
+    function resetarApp() {
+        document.querySelector('.conf-modal h3').innerHTML = "⚠️ Zona de Perigo";
+        document.getElementById('textoConfExclusao').innerHTML = "Deseja apagar TUDO? Isso excluirá os dados do celular e também da Nuvem (Firebase). Não há volta.";
+        document.getElementById('boxBotoesConf').innerHTML = `<div style="display:flex;gap:10px; margin-top: 10px;"><button class="btn-conf btn-no" style="flex:1;" onclick="cancelarExclusao()">Cancelar</button><button class="btn-conf btn-yes" style="flex:1; background: var(--red); color: white;" onclick="confirmarReset()">Sim, APAGAR TUDO</button></div>`;
+        document.getElementById('confModal').classList.add('active');
+    }
+
     async function confirmarReset() {
+        showToast("Limpando tudo...");
+        const cofreRef = db.collection("guiabolso").doc("bancodedados");
+        await cofreRef.set({ usuarios: [], transacoes: [], projetos: [] });
         localStorage.clear(); sessionStorage.clear();
         if ('caches' in window) { const keys = await caches.keys(); for (let key of keys) { await caches.delete(key); } }
-        cancelarExclusao(); showToast("Aplicativo zerado COMPLETAMENTE!");
+        cancelarExclusao(); showToast("Aplicativo zerado com sucesso!");
         setTimeout(() => { window.location.reload(true); }, 1000);
     }
 
@@ -1164,7 +1189,7 @@
     const gerarDesafio = () => { const array = new Uint8Array(32); window.crypto.getRandomValues(array); return array; };
 
     async function usarBiometria() {
-        if (!window.PublicKeyCredential) { alert("O seu celular ou navegador não suporta biometria. Use a senha numérica."); return; }
+        if (!window.PublicKeyCredential) { alert("O seu celular ou navegador não suporta biometria. Use e-mail/senha."); return; }
         try {
             let credId = localStorage.getItem('biometriaAppId');
             if (!credId) {
@@ -1177,11 +1202,10 @@
     }
 
     function liberarTelaBiometria() {
-        const usuarioSelecionado = document.getElementById('loginUsuario').value;
+        const usuarioSelecionado = "Livio"; // Default pra biometria se não souber o email
         sessionStorage.setItem('acessoGarantido', 'true'); sessionStorage.setItem('usuarioLogado', usuarioSelecionado);
         document.getElementById('loginOverlay').style.display = 'none';
-        const sexo = localStorage.getItem(`sexo_${usuarioSelecionado}`) || 'M'; let saudacao = sexo === 'F' ? 'Bem-vinda' : 'Bem-vindo';
-        showToast(`${saudacao}, ${usuarioSelecionado} (via Biometria)!`);
+        showToast(`Bem-vindo de volta (via Biometria)!`);
     }
 
     // ==========================================
