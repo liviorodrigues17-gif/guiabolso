@@ -1997,11 +1997,15 @@ document.getElementById('loginSenha').addEventListener('keypress', function (e) 
     if (e.key === 'Enter') verificarAcesso();
 });
 
+
+<button id="btnInstalar" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); padding:12px 20px; background:#22c55e; color:#fff; border:none; border-radius:10px; z-index:9999; font-weight:bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3); cursor: pointer;">
+    📲 Instalar App
+</button>
+
+<script>
     // ==========================================
     // --- 👆 MOTOR DE BIOMETRIA (PASSKEYS) ---
     // ==========================================
-    
-    // Função para gerar códigos de segurança obrigatórios do Google
     const gerarDesafio = () => {
         const array = new Uint8Array(32);
         window.crypto.getRandomValues(array);
@@ -2009,14 +2013,12 @@ document.getElementById('loginSenha').addEventListener('keypress', function (e) 
     };
 
     async function usarBiometria() {
-        // Verifica se o celular tem suporte a leitura biométrica pelo navegador/WebView
         if (!window.PublicKeyCredential) {
-            alert("O seu celular ou a versão deste aplicativo não suporta biometria. Use a senha numérica.");
+            alert("O seu celular ou navegador não suporta biometria. Use a senha numérica.");
             return;
         }
 
         try {
-            // Procura se a pessoa já cadastrou a digital neste app antes
             let credId = localStorage.getItem('biometriaAppId');
 
             if (!credId) {
@@ -2036,7 +2038,6 @@ document.getElementById('loginSenha').addEventListener('keypress', function (e) 
                     }
                 });
 
-                // Salva a "chave" da digital no celular para as próximas vezes
                 let idArray = Array.from(new Uint8Array(credential.rawId));
                 localStorage.setItem('biometriaAppId', JSON.stringify(idArray));
                 liberarTela();
@@ -2051,127 +2052,70 @@ document.getElementById('loginSenha').addEventListener('keypress', function (e) 
                         userVerification: "required"
                     }
                 });
-                
-                // Se a digital for aceita pelo celular, libera a tela!
                 liberarTela();
             }
         } catch (erro) {
-            console.log("Erro na biometria:", erro);
-            // Se a pessoa cancelar ou o sensor falhar, ele não faz nada e a pessoa pode usar a senha.
+            console.log("Aviso: Biometria cancelada ou falhou.", erro);
         }
     }
 
-    // Função que esconde a tela preta (usada tanto pela senha quanto pela biometria)
     function liberarTela() {
-    const usuarioSelecionado = document.getElementById('loginUsuario').value;
+        const usuarioSelecionado = document.getElementById('loginUsuario').value;
+        sessionStorage.setItem('acessoGarantido', 'true');
+        sessionStorage.setItem('usuarioLogado', usuarioSelecionado);
+        
+        document.getElementById('loginOverlay').style.display = 'none';
 
-    sessionStorage.setItem('acessoGarantido', 'true');
-    sessionStorage.setItem('usuarioLogado', usuarioSelecionado);
-    
-    document.getElementById('loginOverlay').style.display = 'none';
+        const sexo = localStorage.getItem(`sexo_${usuarioSelecionado}`) || 'M';
+        let saudacao = sexo === 'F' ? 'Bem-vinda' : 'Bem-vindo';
+        showToast(`${saudacao}, ${usuarioSelecionado}!`);
+    }
 
-    // pega sexo salvo
-    const sexo = localStorage.getItem(`sexo_${usuarioSelecionado}`) || 'M';
+    // ==========================================
+    // 📲 LÓGICA DE INSTALAÇÃO DO APP (PWA)
+    // ==========================================
+    let deferredPrompt;
 
-    let saudacao = sexo === 'F' ? 'Bem-vinda' : 'Bem-vindo';
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('btnInstalar').style.display = 'block';
+    });
 
-    showToast(`${saudacao}, ${usuarioSelecionado}!`);
-}
-    
-</script> 
-<button id="btnInstalar" style="
-  display:none;
-  position:fixed;
-  bottom:20px;
-  left:50%;
-  transform:translateX(-50%);
-  padding:12px 20px;
-  background:#22c55e;
-  color:#fff;
-  border:none;
-  border-radius:10px;
-  z-index:9999;
-">
-  📲 Instalar App
-</button>
+    document.getElementById('btnInstalar').addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        document.getElementById('btnInstalar').style.display = 'none';
+    });
 
-<script>
-let deferredPrompt;
+    // ==========================================
+    // ⚙️ EVENTOS AUTOMÁTICOS (AO ABRIR O APP)
+    // ==========================================
+    document.addEventListener("DOMContentLoaded", () => {
+        
+        // 1. Inicia o Service Worker do Firebase
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('firebase-messaging-sw.js')
+            .then(() => console.log("SW de Notificação registrado!"))
+            .catch(err => console.log("Aviso no SW de Notificação:", err));
+        }
 
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
+        // 2. Chama a Biometria Automática (Se já estiver cadastrada e não estiver logado)
+        const temBiometria = localStorage.getItem('biometriaAppId');
+        const overlay = document.getElementById('loginOverlay');
+        
+        if (temBiometria && overlay.style.display !== 'none') {
+            // Tenta puxar sozinho após 800ms
+            setTimeout(() => { usarBiometria(); }, 800);
 
-  document.getElementById('btnInstalar').style.display = 'block';
-});
-
-document.getElementById('btnInstalar').addEventListener('click', async () => {
-  if (!deferredPrompt) return;
-
-  deferredPrompt.prompt();
-  await deferredPrompt.userChoice;
-  deferredPrompt = null;
-});
+            // Se o navegador bloquear o automático, abre no primeiro toque NA TELA DE LOGIN
+            overlay.addEventListener("click", () => {
+                if(overlay.style.display !== 'none') usarBiometria();
+            }, { once: true });
+        }
+    });
 </script>
-
-
-<script>
-async function iniciarNotificacoes() {
-
-  const permissao = await Notification.requestPermission();
-
-  if (permissao !== "granted") {
-    alert("Permita notificações!");
-    return;
-  }
-
-  const messaging = firebase.messaging();
-
-  const token = await messaging.getToken({
-    vapidKey: "BIvSshhBpe7qbCZ7mpXk4Ng5LDKg3IYQWXSyTO2yViB7U-PzqJtWAxMqdVUkHV-X5H5E6I5kH7h1DFPZd5XAQGM"
-  });
-
-  console.log("TOKEN:", token);
-
-  // salva no banco
-  firebase.firestore().collection("tokens").doc(token).set({
-    token: token
-  });
-}
-
-// chama a função
-iniciarNotificacoes();
-</script>
-
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/guiabolso/firebase-messaging-sw.js')
-    .then(() => console.log("Service Worker de notificação registrado!"))
-    .catch(err => console.log("Erro ao registrar SW:", err));
-}
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-
-  const temBiometria = localStorage.getItem('biometriaAppId');
-
-  if (!temBiometria) return;
-
-  const btn = document.getElementById('btnBiometria');
-  if (btn) btn.style.display = 'none';
-
-  // tenta sozinho
-  setTimeout(() => {
-    usarBiometria();
-  }, 800);
-
-  // fallback (toque)
-  document.addEventListener("click", () => {
-    usarBiometria();
-  }, { once: true });
-
-});
-</script>
-
 </body>
 </html>
