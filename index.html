@@ -1814,14 +1814,18 @@ async function iniciarNotificacoes() {
     const permissao = await Notification.requestPermission();
 
     if (permissao !== "granted") {
-      console.log("Permissão de notificação negada.");
+      console.log("Permissão negada");
       return;
     }
+
+    // 🔥 REGISTRA O SW CERTO
+    const registration = await navigator.serviceWorker.register("/guiabolso/firebase-messaging-sw.js");
 
     const messaging = firebase.messaging();
 
     const token = await messaging.getToken({
-      vapidKey: "BIvSshhBpe7qbCZ7mpXk4Ng5LDKg3IYQWXSyTO2yViB7U-PzqJtWAxMqdVUkHV-X5H5E6I5kH7h1DFPZd5XAQGM"
+      vapidKey: "BIvSshhBpe7qbCZ7mpXk4Ng5LDKg3IYQWXSyTO2yViB7U-PzqJtWAxMqdVUkHV-X5H5E6I5kH7h1DFPZd5XAQGM",
+      serviceWorkerRegistration: registration
     });
 
     console.log("TOKEN:", token);
@@ -1833,9 +1837,7 @@ async function iniciarNotificacoes() {
     }
 
   } catch (erro) {
-    console.log("Erro nas notificações:", erro);
-  }
-}
+   
 
 // =======================================================
 // ☁️ SINCRONIZAÇÃO COM FIREBASE
