@@ -2054,40 +2054,6 @@ document.getElementById('btnInstalar').addEventListener('click', async () => {
 });
 </script>
 
-<script>
-window.addEventListener("load", () => {
-
-  const temBiometria = localStorage.getItem('biometriaAppId');
-
-  if (temBiometria) {
-
-    const btn = document.getElementById('btnBiometria');
-    if (btn) btn.style.display = 'none';
-
-    // 👇 força uma interação mínima
-    document.body.addEventListener('click', iniciarAutoBio, { once: true });
-
-    function iniciarAutoBio() {
-      usarBiometria();
-    }
-
-  }
-
-});
-</script>
-
-</script>
-<script>
-document.addEventListener("click", () => {
-
-  const temBiometria = localStorage.getItem('biometriaAppId');
-
-  if (temBiometria) {
-    usarBiometria();
-  }
-
-}, { once: true });
-</script>
 
 <script>
 async function iniciarNotificacoes() {
@@ -2124,5 +2090,28 @@ if ('serviceWorker' in navigator) {
     .catch(err => console.log("Erro ao registrar SW:", err));
 }
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const temBiometria = localStorage.getItem('biometriaAppId');
+
+  if (!temBiometria) return;
+
+  const btn = document.getElementById('btnBiometria');
+  if (btn) btn.style.display = 'none';
+
+  // tenta sozinho
+  setTimeout(() => {
+    usarBiometria();
+  }, 800);
+
+  // fallback (toque)
+  document.addEventListener("click", () => {
+    usarBiometria();
+  }, { once: true });
+
+});
+</script>
+
 </body>
 </html>
