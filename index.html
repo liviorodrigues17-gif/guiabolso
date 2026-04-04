@@ -535,12 +535,28 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     
+    // 1. O CADEADO DA SESSÃO (Impede o Firebase de abrir o app sozinho)
     firebase.auth().onAuthStateChanged((user) => {
         const overlayLogin = document.getElementById('loginOverlay');
         if (user) {
             sessaoAtiva = true;
-            if (overlayLogin) overlayLogin.style.display = 'none';
-            verificarPerfilCelular();
+            let cofreAberto = sessionStorage.getItem('cofreAberto');
+            let temBiometria = localStorage.getItem('biometriaAppId');
+
+            if (cofreAberto) {
+                // Já destrancou nesta sessão! Pode entrar.
+                if (overlayLogin) overlayLogin.style.display = 'none';
+                verificarPerfilCelular();
+            } else if (temBiometria) {
+                // Firebase logou, mas a sessão é nova (app acabou de abrir). Pede a digital!
+                if (overlayLogin) overlayLogin.style.display = 'flex';
+                setTimeout(() => { usarBiometria(); }, 500);
+            } else {
+                // Não tem biometria cadastrada no celular. Entra direto.
+                sessionStorage.setItem('cofreAberto', 'true');
+                if (overlayLogin) overlayLogin.style.display = 'none';
+                verificarPerfilCelular();
+            }
         } else {
             sessaoAtiva = false;
             if (overlayLogin) overlayLogin.style.display = 'flex';
@@ -746,18 +762,39 @@
     // ==========================================
     // 🔔 NOTIFICAÇÕES
     // ==========================================
-    async function iniciarNotificacoes() {
-      try {
-        const permissao = await Notification.requestPermission();
-        if (permissao !== "granted") { showToast("Permissão negada pelo seu celular."); return; }
-        const registration = await navigator.serviceWorker.register("sw.js");
-        const messaging = firebase.messaging();
-        const token = await messaging.getToken({ vapidKey: "BIvSshhBpe7qbCZ7mpXk4Ng5LDKg3IYQWXSyTO2yViB7U-PzqJtWAxMqdVUkHV-X5H5E6I5kH7h1DFPZd5XAQGM", serviceWorkerRegistration: registration });
-        if (token) { await db.collection("tokens").doc(token).set({ token }); showToast("Notificações Ativadas!");}
-      } catch (erro) { 
-          console.log("Erro notificações:", erro); 
-          showToast("Erro ao ativar. Tente reinstalar o app ou checar a permissão no Safari/Chrome."); 
-      }
+   async function iniciarNotificacoes() {
+        // 1. Avisa na tela se o navegador do celular for antigo/incompatível
+        if (!("Notification" in window)) {
+            showToast("⚠️ Seu aparelho ou navegador atual não suporta notificações.");
+            return;
+        }
+
+        try {
+            const permissao = await Notification.requestPermission();
+            
+            // 2. Avisa na tela se o usuário bloqueou nas configurações
+            if (permissao !== "granted") { 
+                showToast("❌ Permissão negada nas configurações do celular."); 
+                return; 
+            }
+            
+            const registration = await navigator.serviceWorker.register("sw.js");
+            const messaging = firebase.messaging();
+            const token = await messaging.getToken({ 
+                vapidKey: "BIvSshhBpe7qbCZ7mpXk4Ng5LDKg3IYQWXSyTO2yViB7U-PzqJtWAxMqdVUkHV-X5H5E6I5kH7h1DFPZd5XAQGM", 
+                serviceWorkerRegistration: registration 
+            });
+            
+            if (token) { 
+                await db.collection("tokens").doc(token).set({ token }); 
+                showToast("🔔 Notificações Ativadas com Sucesso!");
+            }
+            
+        } catch (erro) { 
+            console.log("Erro notificações:", erro); 
+            // 3. O GRANDE SEGREDO: Mostra na tela do celular qual foi o erro técnico do Google/Apple
+            showToast("Erro técnico: " + erro.message); 
+        }
     }
 
     function pedirPermissaoNotificacao() { iniciarNotificacoes(); }
@@ -768,7 +805,6 @@
             try { let som = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); som.play().catch(() => {}); } catch (e) {}
         }
     }
-
     function verificarVencimentos() {
         let hoje = new Date(); hoje.setHours(0,0,0,0);
         let d2 = new Date(hoje); d2.setDate(hoje.getDate() + 2);
@@ -915,10 +951,11 @@
                         isDragging = true;
                         startX = (ev.touches ? ev.touches[0].clientX : ev.clientX) - cropX;
                         startY = (ev.touches ? ev.touches[0].clientY : ev.clientY) - cropY;
-                        ev.preventDefault();
                     };
                     document.onmousemove = document.ontouchmove = (ev) => {
                         if(!isDragging) return;
+                        if (ev.touches) ev.preventDefault(); // 🛑 BLOQUEIA O SCROLL DO CELULAR!
+                        
                         cropX = (ev.touches ? ev.touches[0].clientX : ev.clientX) - startX;
                         cropY = (ev.touches ? ev.touches[0].clientY : ev.clientY) - startY;
                         
@@ -947,21 +984,26 @@
     
     function salvarUsuario() {
         let n = document.getElementById('inputNome').value.trim(); 
-        let r = parseMoeda(document.getElementById('inputRenda').value);
+        let rStr = document.getElementById('inputRenda').value;
+        let r = rStr ? parseMoeda(rStr) : 0; 
         
-        // 🐛 BUG CORRIGIDO: Antes ele bloqueava se a renda fosse 0. Agora ele deixa passar!
-        if (!n || isNaN(r)) { showToast("Preencha o nome corretamente!"); return; }
+        if (!n) { showToast("Preencha o nome!"); return; }
         
         if (isFazendoCrop) {
             try {
                 let canvas = document.createElement('canvas'); canvas.width = 150; canvas.height = 150;
                 let ctx = canvas.getContext('2d'); let img = document.getElementById('cropImg');
-                if (img.naturalWidth) {
+                if (img.complete && img.naturalWidth > 0) {
                     let scale = Math.max(150 / img.naturalWidth, 150 / img.naturalHeight);
                     ctx.drawImage(img, Math.abs(cropX) / scale, Math.abs(cropY) / scale, 150/scale, 150/scale, 0, 0, 150, 150);
                     avatarFinalSelecionado = canvas.toDataURL('image/jpeg', 0.6);
+                } else {
+                    avatarFinalSelecionado = img.src; // Backup se o celular engasgar
                 }
-            } catch(e) {}
+            } catch(e) {
+                console.log("Erro no crop", e);
+                avatarFinalSelecionado = document.getElementById('cropImg').src; // Backup de segurança
+            }
         }
 
         let img = avatarFinalSelecionado || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(n)}&backgroundColor=e2e8f0`;
@@ -1469,6 +1511,9 @@
         const erroMsg = document.getElementById('erroLogin');
 
         firebase.auth().signInWithEmailAndPassword(emailDigitado, senhaDigitada)
+        .then(() => {
+            sessionStorage.setItem('cofreAberto', 'true'); // 🔑 Avisa que destrancou!
+        })
         .catch((error) => {
             erroMsg.style.display = 'block';
             erroMsg.innerText = "E-mail ou senha incorretos!";
@@ -1518,6 +1563,7 @@
     }
 
     function liberarTelaBiometria() {
+        sessionStorage.setItem('cofreAberto', 'true'); // 🔑 Avisa que destrancou!
         sessaoAtiva = true;
         document.getElementById('loginOverlay').style.display = 'none';
         verificarPerfilCelular(); 
