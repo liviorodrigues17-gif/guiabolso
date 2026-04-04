@@ -19,14 +19,20 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging-compat.js"></script>
     
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for(let registration of registrations) {
+                        if(registration.active && registration.active.scriptURL.includes('firebase-messaging-sw.js')) {
+                            registration.unregister();
+                        }
+                    }
+                });
                 navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('Service Worker Registrado!'))
-                .catch(err => console.log('Erro no Service Worker:', err));
+                .then(reg => console.log('Service Worker Único Registrado!'))
+                .catch(err => console.log('Erro no SW:', err));
             });
         }
     </script>
@@ -35,27 +41,8 @@
         :root { --primary: #5c2092; --primary-dark: #3b1063; --bg: #f4f5f9; --card: #ffffff; --text: #1c1c1e; --secondary-text: #6e6e73; --green: #22c55e; --red: #ef4444; --input-bg: #f3f4f6; --chart-empty: #e5e7eb; --border-hover: #e2e8f0; --nav-bg: #ffffff; }
         body.dark-mode { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --secondary-text: #cbd5e1; --input-bg: #334155; --chart-empty: #334155; --border-hover: #475569; --nav-bg: #1e293b; --primary: #a855f7; --primary-dark: #9333ea; --red: #f87171; --green: #4ade80; }
         
-        /* 🔥 O ESCUDO NUCLEAR (Aplica em TUDO) */
-        * { 
-            margin: 0; 
-            padding: 0; 
-            box-sizing: border-box; 
-            -webkit-touch-callout: none; /* Bloqueia o menu no iOS */
-            -webkit-user-select: none;   /* Safari */
-            -khtml-user-select: none;    /* Konqueror HTML */
-            -moz-user-select: none;      /* Firefox antigo */
-            -ms-user-select: none;       /* Internet Explorer/Edge */
-            user-select: none;           /* Chrome e Android */
-        }
-        
-        /* 🟢 Libera a digitação SOMENTE nos campos que importam */
-        input, select, textarea {
-            -webkit-user-select: auto !important;
-            -khtml-user-select: auto !important;
-            -moz-user-select: auto !important;
-            -ms-user-select: auto !important;
-            user-select: auto !important;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+        input, select, textarea { -webkit-user-select: auto !important; user-select: auto !important; }
 
         body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; transition: 0.3s; }
         .app-container { width: 100%; max-width: 1400px; margin: 0 auto; position: relative; padding-bottom: 90px; min-height: 100vh; }
@@ -70,7 +57,7 @@
         .header-linha { width: 2px; height: 30px; background: rgba(255,255,255,0.2); margin: 0 5px; }
         .avatar-header { width: 55px; height: 55px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.4); box-shadow: 0 4px 15px rgba(0,0,0,0.2); object-fit: cover; cursor: pointer; transition: 0.2s; }
 
-        @media (max-width: 768px) { .premium-header { flex-direction: column; text-align: center; gap: 20px; padding: 30px 20px 60px; } .header-textos h1 { font-size: 1.4rem; } .header-textos h2 { font-size: 0.85rem; } .header-botoes { justify-content: center; width: 100%; } }
+        @media (max-width: 768px) { .premium-header { flex-direction: column; text-align: center; gap: 20px; padding: 30px 20px 60px; } .header-textos h1 { font-size: 1.4rem; } .header-textos h2 { font-size: 0.85rem; } .header-botoes { justify-content: center; width: 100%; flex-wrap: wrap;} }
         
         .tab-content { display: none !important; animation: fadeIn 0.3s ease; } .tab-content.active { display: block !important; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -82,12 +69,10 @@
         .dashboard-col { flex: 1; min-width: 0; }
         @media (max-width: 768px) { .dashboard-columns { flex-direction: column; align-items: stretch; } .dashboard-col { width: 100% !important; } }
   
-        .widget-item { position: relative; background: var(--card); border-radius: 20px; padding: 25px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; transition: 0.3s; border: 2px solid transparent; width: 100%; }
-        .widget-add-btn { background: transparent !important; box-shadow: none !important; padding: 5px 0 !important; display: flex; align-items: flex-end; justify-content: flex-end; }
+        .widget-item { position: relative; background: var(--card); border-radius: 20px; padding: 25px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; transition: 0.3s; border: 2px solid transparent; width: 100%; margin-bottom: 20px;}
         .btn-add-small { padding: 12px 24px; background: var(--primary); color: white; border: none; border-radius: 14px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(92, 32, 146, 0.3); display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: max-content; } .btn-add-small:hover { background: var(--primary-dark); transform: translateY(-2px); }
 
         .widget-controls { display: none; position: absolute; top: 15px; right: 15px; z-index: 10; }
-        .widget-add-btn .widget-controls { top: -10px; right: 0; }
         .control-btn { background: var(--input-bg); color: var(--text); border: 1px solid var(--border-hover); border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem; transition: 0.2s; } 
         .control-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
         .drag-handle { cursor: grab; } .drag-handle:active { cursor: grabbing; }
@@ -110,20 +95,13 @@
         #ultimasMovContainer { padding-top: 5px; }
         .tx-item-dashboard { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 5px; border-radius: 12px; transition: background 0.2s; border-bottom: 1px solid var(--border-hover); }
         .tx-item-dashboard:last-child { border-bottom: none; }
-        .tx-item-dashboard:hover { background: var(--input-bg); }
-        .tx-icon-wrapper-db { width: 38px; height: 38px; border-radius: 12px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: rgba(92, 32, 146, 0.05); }
-        .tx-details-wrapper-db { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
-        .tx-title-db { font-size: 0.95rem; font-weight: 600; color: var(--text); text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
-        .tx-date-db { font-size: 0.75rem; color: var(--secondary-text); font-weight: 600; }
-        .tx-value-db { font-size: 1rem; font-weight: 700; white-space: nowrap; }
-
+        
         .user-list-card { background: transparent; padding: 12px 5px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: 0.2s; border-bottom: 1px solid var(--border-hover); } 
         .user-list-card:last-child { border-bottom: none; }
         .user-list-card:hover { transform: translateX(5px); }
         .animated-avatar { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); } .user-info { flex: 1; display: flex; flex-direction: column; } .user-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; } .user-name { font-weight: 600; font-size: 1.05rem; color: var(--text); } .user-income { font-weight: 600; font-size: 0.95rem; color: var(--text); }
         .progress-track { width: 100%; height: 6px; background: var(--chart-empty); border-radius: 4px; overflow: hidden; display: flex; } .progress-fill { height: 100%; border-radius: 4px; transition: 0.5s; } .percent-label { font-size: 0.8rem; color: var(--secondary-text); font-weight: 600; margin-left: 8px;}
         
-        .edit-mode-banner { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--green); color: white; padding: 12px 24px; border-radius: 30px; font-weight: 600; z-index: 4000; box-shadow: 0 5px 20px rgba(34, 197, 94, 0.4); cursor: pointer; transition: 0.2s; } body.edit-mode .edit-mode-banner { display: flex; align-items: center; gap: 10px; animation: fadeIn 0.3s; } .edit-mode-banner:hover { background: #16a34a; transform: translateX(-50%) scale(1.05); }
         .bottom-nav { position: fixed; background: var(--nav-bg); z-index: 1000; transition: 0.3s; box-shadow: 0 4px 20px rgba(0,0,0,0.1); display: flex;} .nav-divider { background: var(--chart-empty); }
         
         @media (max-width: 767px) { .app-container { padding-bottom: 80px; } .bottom-nav { bottom: 0; left: 0; width: 100%; justify-content: center; padding: 10px 15px 15px; border-top-left-radius: 20px; border-top-right-radius: 20px; overflow-x: auto; gap: 15px; } .bottom-nav::-webkit-scrollbar { height: 4px; } .bottom-nav::-webkit-scrollbar-thumb { background: var(--chart-empty); border-radius: 10px; } .nav-group { display: flex; gap: 15px; justify-content: center; width: 100%; } .nav-divider { width: 2px; height: 30px; margin: auto 5px; } .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--secondary-text); font-size: 0.75rem; cursor: pointer; min-width: 60px; white-space: nowrap; } .nav-item.active { color: var(--primary); font-weight: 600; } .nav-item span { font-size: 1.5rem; margin-bottom: 2px; } }
@@ -132,16 +110,22 @@
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 2000; justify-content: center; align-items: center; } .modal-overlay.active { display: flex; animation: fadeIn 0.2s; }
         .modal-content { background: var(--card); color: var(--text); width: 100%; max-width: 450px; padding: 24px 28px; border-radius: 24px; animation: scaleUp 0.2s; max-height: 98vh; overflow-y: auto; display: flex; flex-direction: column; } @keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; } .modal-header h3 { font-size: 1.25rem; color: var(--text); } .close-btn { background: none; border: none; font-size: 1.8rem; cursor: pointer; color: var(--secondary-text); line-height: 1;}
-        .profile-upload-area { display: flex; flex-direction: column; align-items: center; margin-bottom: 15px; } .profile-circle { width: 75px; height: 75px; border-radius: 50%; background: var(--input-bg); border: 3px solid var(--primary); cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(92, 32, 146, 0.2); transition: 0.2s; } .profile-circle:hover { transform: scale(1.05); } .profile-circle img { width: 100%; height: 100%; object-fit: cover; } .upload-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.6); color: white; font-size: 0.65rem; text-align: center; padding: 3px 0; font-weight: 600; }
+        .profile-upload-area { display: flex; flex-direction: column; align-items: center; margin-bottom: 15px; } .profile-circle { width: 90px; height: 90px; border-radius: 50%; background: var(--input-bg); border: 3px solid var(--primary); cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(92, 32, 146, 0.2); transition: 0.2s; flex-shrink: 0;} .profile-circle:hover { transform: scale(1.05); } .profile-circle img { width: 100%; height: 100%; object-fit: cover; } .upload-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.6); color: white; font-size: 0.65rem; text-align: center; padding: 4px 0; font-weight: 600; }
+        
+        /* 📸 ESTILOS DO MINI-CROPPER */
+        .crop-container { display: none; width: 150px; height: 150px; border-radius: 50%; border: 3px solid var(--primary); margin: 0 auto 15px; overflow: hidden; position: relative; background: var(--input-bg); touch-action: none; box-shadow: 0 4px 15px rgba(92, 32, 146, 0.3);}
+        .crop-img { position: absolute; cursor: move; transform-origin: top left; }
+        .crop-hint { font-size: 0.75rem; color: var(--primary); text-align: center; margin-top: -10px; margin-bottom: 15px; font-weight: 600; display: none; animation: fadeIn 0.3s;}
+
         .form-group { margin-bottom: 12px; } .form-control { width: 100%; padding: 12px 14px; border: 1px solid var(--border-hover); border-radius: 12px; background: var(--input-bg); color: var(--text); font-family: inherit; font-size: 0.95rem; outline: none; } .form-control::placeholder { color: var(--secondary-text); } .form-control:focus { border-color: var(--primary); }
         .avatar-section-title { font-size: 0.85rem; color: var(--text); margin: 10px 0 8px; font-weight: 600; text-align: center;} .avatar-grid-container { max-height: 140px; overflow-y: auto; padding: 5px; margin-bottom: 5px; } .avatar-grid-container::-webkit-scrollbar { width: 6px; } .avatar-grid-container::-webkit-scrollbar-thumb { background: var(--chart-empty); border-radius: 10px; } .avatar-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; } .avatar-option { width: 100%; aspect-ratio: 1; border-radius: 50%; object-fit: cover; cursor: pointer; border: 3px solid transparent; transition: 0.2s; background: var(--input-bg); } .avatar-option:hover { transform: scale(1.1); } .avatar-option.selected { border-color: var(--primary); transform: scale(1.1); box-shadow: 0 4px 10px rgba(92, 32, 146, 0.3); }
-        .modal-actions { display: flex; gap: 10px; margin-top: 10px; } .btn-save { flex: 2; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 14px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: 0.2s; } .btn-save:hover { background: var(--primary-dark); } .btn-delete { flex: 1; padding: 14px; background: rgba(239, 68, 68, 0.1); color: var(--red); border: none; border-radius: 14px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: 0.2s; display: none; } .btn-delete:hover { background: var(--red); color: white; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;} .btn-save { flex: 2; min-width: 150px; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 14px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: 0.2s; } .btn-save:hover { background: var(--primary-dark); } .btn-delete { flex: 1; min-width: 100px; padding: 14px; background: rgba(239, 68, 68, 0.1); color: var(--red); border: none; border-radius: 14px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: 0.2s; display: none; } .btn-delete:hover { background: var(--red); color: white; }
         
         .conf-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; justify-content: center; align-items: center; } .conf-overlay.active { display: flex; animation: fadeIn 0.2s; } .conf-modal { background: var(--card); color: var(--text); border-radius: 20px; padding: 25px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.2); animation: scaleUp 0.2s; } .conf-actions { display: flex; gap: 10px; margin-top: 20px; } .btn-conf { flex: 1; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.2s; } .btn-no { background: var(--input-bg); color: var(--text); } .btn-yes { background: var(--red); color: white; }
         
         #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 5000; width: 90%; max-width: 420px; text-align: center; pointer-events: none; } .toast { background: #1f2937; color: white; padding: 14px 24px; border-radius: 30px; margin: 8px auto; display: inline-block; font-size: 1rem; transition: 0.5s; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         
-        .transaction-card { background: var(--card); border-radius: 16px; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 2px solid transparent; transition: 0.2s; margin-bottom: 0;} .transaction-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+        .transaction-card { background: var(--card); border-radius: 16px; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0;} .transaction-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
         .tx-left { display: flex; align-items: center; gap: 15px; flex: 1; overflow: hidden; } .tx-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--input-bg); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; } .tx-info-box { display: flex; flex-direction: column; gap: 4px; overflow: hidden; } .tx-title { font-weight: 600; font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text);}
         .tx-meta { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--secondary-text); flex-wrap: wrap;} .tx-badge { background: var(--input-bg); padding: 3px 8px; border-radius: 6px; font-weight: 600; color: var(--text); font-size: 0.75rem;} .tx-badge.casa { border-left: 3px solid var(--primary); } .tx-badge.pessoal { border-left: 3px solid var(--green); }
         .tx-right { display: flex; align-items: center; gap: 15px; } .tx-value { font-weight: 700; font-size: 1.1rem; white-space: nowrap; } .tx-value.despesa { color: var(--red); } .tx-value.receita { color: var(--green); }
@@ -204,6 +188,12 @@
         body.dark-mode #mesAnoDisplay, body.dark-mode button[onclick="abrirModalSimulador()"] { color: #ffffff !important; font-weight: 700 !important; border-color: #ffffff !important; } 
         #emojiGridBox { -ms-overflow-style: none; scrollbar-width: none; overflow-x: hidden; }
         #emojiGridBox::-webkit-scrollbar { display: none; }
+        
+        /* 🔥 EFEITO NETFLIX NO HOVER DOS PERFIS */
+        .netflix-profile { cursor: pointer; transition: 0.3s; opacity: 0.7; }
+        .netflix-profile:hover { opacity: 1; transform: scale(1.1); }
+        .netflix-profile img { border: 3px solid transparent; transition: 0.3s; }
+        .netflix-profile:hover img { border-color: white; }
     </style> 
 </head>
 
@@ -211,22 +201,39 @@
   
     <div id="loginOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: sans-serif;">
         <div style="background: #1e293b; padding: 2rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); width: 90%; max-width: 400px;">
-            <h2 style="margin-bottom: 1rem;">🔐 Guia Bolso Casal</h2>
-            <p style="color: #94a3b8; margin-bottom: 1.5rem;">Identifique-se para acessar as finanças</p>
-            
-            <input type="email" id="loginEmail" autocomplete="username" placeholder="Digite seu e-mail" style="width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 1px solid #334155; margin-bottom: 1rem; box-sizing: border-box; font-size: 16px;">
-            
+            <h2 style="margin-bottom: 1rem;">🔐 Guia Bolso</h2>
+            <p style="color: #94a3b8; margin-bottom: 1.5rem;">Identifique-se para acessar o cofre da família</p>
+            <input type="email" id="loginEmail" autocomplete="username" placeholder="E-mail da Família" style="width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 1px solid #334155; margin-bottom: 1rem; box-sizing: border-box; font-size: 16px;">
             <input type="password" id="loginSenha" autocomplete="current-password" placeholder="Digite a senha" style="width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 1px solid #334155; margin-bottom: 1.5rem; box-sizing: border-box; font-size: 16px;">
-            
-            <button onclick="verificarAcesso()" style="width: 100%; padding: 12px; border-radius: 10px; background: #22c55e; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-bottom: 10px;">
-                Entrar Seguramente
-            </button>
-            
-            <button onclick="usarBiometria()" style="width: 100%; padding: 12px; border-radius: 10px; background: #3b82f6; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                👆 Usar Impressão Digital
-            </button>
-            
+            <button onclick="verificarAcesso()" style="width: 100%; padding: 12px; border-radius: 10px; background: #22c55e; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-bottom: 10px;">Entrar Seguramente</button>
+            <button onclick="usarBiometria()" style="width: 100%; padding: 12px; border-radius: 10px; background: #3b82f6; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">👆 Usar Impressão Digital</button>
             <p id="erroLogin" style="color: #ef4444; margin-top: 1rem; font-size: 14px; display: none;">E-mail ou senha incorretos!</p>
+        </div>
+    </div>
+
+    <div id="setupInicialOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 9100; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; animation: fadeIn 0.5s;">
+        <div style="background: #1e293b; padding: 2.5rem; border-radius: 20px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);">
+            <div style="font-size: 3rem; margin-bottom: 10px;">👋</div>
+            <h2 style="margin-bottom: 10px; font-size: 1.5rem;">Bem-vindo ao app!</h2>
+            <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px;">Para começarmos, crie o primeiro perfil.</p>
+            <input type="text" id="primeiroNomeInput" placeholder="Digite seu nome" class="form-control" style="margin-bottom: 15px; background: #0f172a; color: white; border-color: #334155; text-align: center; font-size: 1.1rem;">
+            <button class="btn-save" style="width: 100%; background: var(--primary);" onclick="criarPrimeiroPerfil()">Continuar ➔</button>
+        </div>
+    </div>
+    
+    <div id="netflixOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 9000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; animation: fadeIn 0.5s;">
+        <h2 style="margin-bottom: 2rem; font-size: 1.8rem; font-weight: 600;">Quem está usando este celular?</h2>
+        <div id="netflixGrid" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; max-width: 600px;">
+            </div>
+        <p style="margin-top: 30px; font-size: 0.85rem; color: #64748b; max-width: 300px; text-align: center;">Vamos salvar esse aparelho como sendo seu. Você pode trocar depois se precisar emprestar o celular.</p>
+    </div>
+
+    <div class="modal-overlay" id="modalRendaRapida" style="z-index: 9500;">
+        <div class="modal-content" style="max-width: 350px;">
+            <h3 id="rendaRapidaTitle" style="margin-bottom: 10px;">Sua Renda Mensal</h3>
+            <p style="font-size: 0.9rem; color: var(--secondary-text); margin-bottom: 15px;">Para o aplicativo calcular as divisões justas, precisamos saber a sua renda (pode alterar depois).</p>
+            <div class="form-group"><input type="text" id="inputRendaRapida" class="form-control" placeholder="R$ 0,00" style="font-size: 1.2rem; font-weight: bold; color: var(--primary);"></div>
+            <button class="btn-save" style="width: 100%; margin-top: 10px;" onclick="salvarRendaRapida()">Confirmar e Entrar</button>
         </div>
     </div>
     
@@ -253,7 +260,7 @@
                 <button onclick="toggleTheme()" id="themeToggleBtn" class="btn-header" title="Modo Escuro">🌙</button>
                 <button onclick="resetarApp()" class="btn-header trash" title="Zerar Aplicativo">🗑️</button>
                 <div class="header-linha"></div> 
-                <img id="avatarHeader" class="avatar-header" src="https://api.dicebear.com/7.x/initials/svg?seed=User" onclick="abrirModal(0)" alt="Perfil" title="Editar Perfil">
+                <img id="avatarHeader" class="avatar-header" src="https://api.dicebear.com/7.x/initials/svg?seed=User" onclick="abrirModalPerfilLogado()" alt="Perfil" title="Meu Perfil">
             </div>
         </header>
         
@@ -375,12 +382,30 @@
     <div class="modal-overlay" id="modalUsuario">
         <div class="modal-content">
             <div class="modal-header"><h3 id="modalTitle">Novo Integrante</h3><button class="close-btn" onclick="fecharModal()">×</button></div>
-            <div class="profile-upload-area"><div class="profile-circle" onclick="document.getElementById('fileUpload').click()"><img id="previewProfileImg" src="" alt="Avatar"><div class="upload-overlay">MUDAR</div></div><input type="file" id="fileUpload" style="display: none;" accept="image/*" onchange="previewFoto(this)"></div>
+            
+            <div class="profile-upload-area">
+                <div class="profile-circle" id="profilePreviewBox" onclick="document.getElementById('fileUpload').click()">
+                    <img id="previewProfileImg" src="" alt="Avatar">
+                    <div class="upload-overlay">MUDAR</div>
+                </div>
+                <div class="crop-container" id="cropArea">
+                    <img id="cropImg" class="crop-img" src="">
+                </div>
+                <p class="crop-hint" id="cropHintText">Arraste a foto para alinhar 👆</p>
+                
+                <input type="file" id="fileUpload" style="display: none;" accept="image/*" onchange="previewFoto(this)">
+            </div>
+
             <div class="form-group"><input type="text" id="inputNome" class="form-control" placeholder="Nome Completo"></div>
             <div class="form-group"><input type="text" id="inputRenda" class="form-control" placeholder="Renda Fixa Mensal (R$)"></div>
-            <p class="avatar-section-title">Ou escolha um avatar</p>
-            <div class="avatar-grid-container"><div class="avatar-grid" id="gridAvatares"></div></div>
-            <div class="modal-actions"><button class="btn-delete" id="btnExcluir" onclick="solicitarExclusaoUser()">Excluir</button><button class="btn-save" onclick="salvarUsuario()">Salvar Integrante</button></div>
+            <p class="avatar-section-title" id="txtAvatarGrade">Ou escolha um avatar</p>
+            <div class="avatar-grid-container" id="boxAvatarGrade"><div class="avatar-grid" id="gridAvatares"></div></div>
+            
+            <div class="modal-actions">
+                <button class="btn-delete" id="btnTrocarPerfil" onclick="trocarPerfil()" style="background: var(--input-bg); color: var(--text);">Trocar Usuário</button>
+                <button class="btn-delete" id="btnExcluir" onclick="solicitarExclusaoUser()">Excluir</button>
+                <button class="btn-save" onclick="salvarUsuario()">Salvar Integrante</button>
+            </div>
         </div>
     </div>
 
@@ -466,18 +491,24 @@
 
 <script>
     // ==========================================
-    // 🛠️ VARIÁVEIS GLOBAIS (ÚNICAS)
+    // 🛠️ VARIÁVEIS GLOBAIS
     // ==========================================
     let usuarios = []; 
     let transacoes = JSON.parse(localStorage.getItem('financas_premium_transacoes')) || [];
     let projetos = JSON.parse(localStorage.getItem('financas_premium_projetos')) || [];
     let editIndex = -1; let editTxIndex = -1; let editProjIndex = -1; let indexProjetoParaAdd = -1;
     let avatarFinalSelecionado = ""; 
+    let isFazendoCrop = false;
     let graficoGeralInstance = null; let graficoCaixaInstance = null; 
     let dataFiltroAtual = new Date();
     const coresPremium = ['#8A05BE', '#22c55e', '#f59e0b', '#3b82f6', '#ec4899', '#14b8a6', '#f43f5e', '#8b5cf6', '#0ea5e9', '#eab308'];
     const chartOptions = { responsive: true, cutout: '75%', maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, animation: { duration: 600 } };
     let sortables = [];
+    
+    // VARIÁVEIS DO SISTEMA NETFLIX
+    let isAppIniciado = false;
+    let sessaoAtiva = false;
+    let perfilParaCadastrarRenda = -1;
 
     // ==========================================
     // ☁️ FIREBASE (INICIALIZAÇÃO)
@@ -494,51 +525,45 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     
-    // 🛡️ O GUARDIÃO DA SESSÃO (Login Automático)
     firebase.auth().onAuthStateChanged((user) => {
-        const overlay = document.getElementById('loginOverlay');
+        const overlayLogin = document.getElementById('loginOverlay');
         if (user) {
-            // O usuário já logou antes! Abre a porta direto.
-            let usuarioSelecionado = user.email.toLowerCase().includes("livio") ? "Livio" : "Lorraine";
-            sessionStorage.setItem('usuarioLogado', usuarioSelecionado);
-            if (overlay) overlay.style.display = 'none';
+            sessaoAtiva = true;
+            if (overlayLogin) overlayLogin.style.display = 'none';
+            verificarPerfilCelular();
         } else {
-            // Ninguém logado. Mostra a tela preta.
-            if (overlay) overlay.style.display = 'flex';
+            sessaoAtiva = false;
+            if (overlayLogin) overlayLogin.style.display = 'flex';
         }
     });
     
     function iniciarApp() {
         const cofreRef = db.collection("guiabolso").doc("bancodedados");
-        let isAppIniciado = false;
         const originalSetItem = localStorage.setItem;
 
         cofreRef.onSnapshot((doc) => {
             if (doc.exists) {
                 let dadosNuvem = doc.data();
-                let qtdTransacoesAntigas = transacoes.length;
+                let qtdAntiga = transacoes.length;
 
                 usuarios = dadosNuvem.usuarios || [];
                 transacoes = dadosNuvem.transacoes || [];
                 projetos = dadosNuvem.projetos || [];
 
-                // Salva no cache local silenciosamente sem acionar o trigger do Nuvem de volta
                 originalSetItem.call(localStorage, 'financas_premium_dados', JSON.stringify(usuarios));
                 originalSetItem.call(localStorage, 'financas_premium_transacoes', JSON.stringify(transacoes));
                 originalSetItem.call(localStorage, 'financas_premium_projetos', JSON.stringify(projetos));
 
                 if (isAppIniciado && transacoes.length > qtdAntiga && transacoes.length > 0) {
+                    const ultimaTx = transacoes.reduce((maisNova, atual) => {
+                        return (atual.timestamp || 0) > (maisNova.timestamp || 0) ? atual : maisNova;
+                    }, transacoes[0]);
             
-                 // 🎯 A MÁGICA À PROVA DE FALHAS: Pega a transação com o maior carimbo de tempo
-                const ultimaTx = transacoes.reduce((maisNova, atual) => {
-                return (atual.timestamp || 0) > (maisNova.timestamp || 0) ? atual : maisNova;
-                 }, transacoes[0]);
-            
-                 if (ultimaTx) {
-                const msgVisual = `${ultimaTx.descricao} de ${ultimaTx.valor.toLocaleString("pt-BR", {style:"currency",currency:"BRL"})} foi adicionado!`;
-                showToast(msgVisual);
-                try { let som = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); som.play().catch(() => {}); } catch(e){}
-                  }
+                    if (ultimaTx) {
+                        const msgVisual = `${ultimaTx.descricao} de ${ultimaTx.valor.toLocaleString("pt-BR", {style:"currency",currency:"BRL"})} adicionado!`;
+                        showToast(msgVisual);
+                        try { let som = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); som.play().catch(() => {}); } catch(e){}
+                    }
                 }
 
                 atualizarCaixa();
@@ -548,29 +573,145 @@
                 if (!isAppIniciado) {
                     isAppIniciado = true;
                     verificarVencimentos();
+                    verificarPerfilCelular(); 
+                } else {
+                    if(document.getElementById('netflixOverlay').style.display === 'flex') {
+                        renderizarTelaNetflix();
+                    }
                 }
             } else {
-                salvarNaNuvem();
+                salvarNaNuvemFirebase();
                 isAppIniciado = true;
+                verificarPerfilCelular();
             }
         });
 
-        function salvarNaNuvem() {
-            if (!isAppIniciado) return;
-            cofreRef.set({ usuarios: usuarios, transacoes: transacoes, projetos: projetos });
-        }
-
         localStorage.setItem = function(key, value) {
             originalSetItem.apply(this, arguments);
-            if (key.includes('financas_premium_')) salvarNaNuvem();
+            if (key.includes('financas_premium_')) salvarNaNuvemFirebase();
         };
 
-        // O Desfibrilador (Atualiza instantâneo quando acende a tela)
         document.addEventListener("visibilitychange", () => {
             if (document.visibilityState === "visible") {
                 db.disableNetwork().then(() => db.enableNetwork());
             }
         });
+    }
+
+    function salvarNaNuvemFirebase() {
+        if (!isAppIniciado) return;
+        db.collection("guiabolso").doc("bancodedados").set({ usuarios: usuarios, transacoes: transacoes, projetos: projetos });
+    }
+
+    // ==========================================
+    // 🍿 SISTEMA DE PERFIL (NETFLIX + SETUP INICIAL)
+    // ==========================================
+    function verificarPerfilCelular() {
+        if (!sessaoAtiva || !isAppIniciado) return; 
+
+        if (usuarios.length === 0) {
+            document.getElementById('netflixOverlay').style.display = 'none';
+            document.getElementById('setupInicialOverlay').style.display = 'flex';
+            return;
+        }
+
+        let donoDoCelular = localStorage.getItem('meuPerfilFixo_GuiaBolso');
+        let usuarioAindaExiste = usuarios.find(u => u.nome === donoDoCelular);
+
+        if (donoDoCelular && usuarioAindaExiste) {
+            document.getElementById('setupInicialOverlay').style.display = 'none';
+            document.getElementById('netflixOverlay').style.display = 'none';
+            sessionStorage.setItem('usuarioLogado', donoDoCelular);
+            atualizarDashboardPremium();
+        } else {
+            document.getElementById('setupInicialOverlay').style.display = 'none';
+            document.getElementById('netflixOverlay').style.display = 'flex';
+            renderizarTelaNetflix();
+        }
+    }
+
+    function criarPrimeiroPerfil() {
+        let nome = document.getElementById('primeiroNomeInput').value.trim();
+        if (!nome) { showToast("Por favor, digite seu nome!"); return; }
+        
+        nome = nome.charAt(0).toUpperCase() + nome.slice(1);
+        usuarios.push({ nome: nome, renda: 0, avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(nome)}&backgroundColor=e2e8f0` });
+        
+        localStorage.setItem('financas_premium_dados', JSON.stringify(usuarios));
+        salvarNaNuvemFirebase();
+        
+        document.getElementById('setupInicialOverlay').style.display = 'none';
+        verificarPerfilCelular();
+    }
+
+    function renderizarTelaNetflix() {
+        const grid = document.getElementById('netflixGrid');
+        grid.innerHTML = '';
+
+        usuarios.forEach((u, idx) => {
+            let foto = u.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.nome)}&backgroundColor=e2e8f0`;
+            grid.innerHTML += `
+            <div class="netflix-profile" style="display: flex; flex-direction: column; align-items: center;" onclick="clicarPerfilNetflix(${idx})">
+                <img src="${foto}" style="width: 100px; height: 100px; border-radius: 15px; margin-bottom: 12px; object-fit: cover; box-shadow: 0 10px 20px rgba(0,0,0,0.5);">
+                <span style="color: #f8fafc; font-weight: 600; font-size: 1.15rem; letter-spacing: 0.5px;">${u.nome}</span>
+            </div>`;
+        });
+
+        grid.innerHTML += `
+        <div class="netflix-profile" style="display: flex; flex-direction: column; align-items: center;" onclick="novoPerfilNetflix()">
+            <div style="width: 100px; height: 100px; border-radius: 15px; border: 2px dashed #475569; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #94a3b8; margin-bottom: 12px;">+</div>
+            <span style="color: #94a3b8; font-weight: 600; font-size: 1.15rem; letter-spacing: 0.5px;">Novo</span>
+        </div>`;
+    }
+
+    function novoPerfilNetflix() {
+        let nome = prompt("Qual o nome do novo integrante? (Apenas o nome)");
+        if (nome && nome.trim() !== "") {
+            nome = nome.trim();
+            nome = nome.charAt(0).toUpperCase() + nome.slice(1); 
+            usuarios.push({ nome: nome, renda: 0, avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(nome)}&backgroundColor=e2e8f0` });
+            localStorage.setItem('financas_premium_dados', JSON.stringify(usuarios));
+            renderizarTelaNetflix();
+        }
+    }
+
+    function clicarPerfilNetflix(idx) {
+        let u = usuarios[idx];
+        if (!u.renda || u.renda <= 0) {
+            perfilParaCadastrarRenda = idx;
+            document.getElementById('inputRendaRapida').value = '';
+            document.getElementById('rendaRapidaTitle').innerText = `Renda de ${u.nome}`;
+            document.getElementById('modalRendaRapida').classList.add('active');
+        } else {
+            efetivarDonoDoCelular(u.nome);
+        }
+    }
+
+    function salvarRendaRapida() {
+        let val = parseMoeda(document.getElementById('inputRendaRapida').value);
+        if (val <= 0) { showToast("Insira um valor válido de renda."); return; }
+        
+        usuarios[perfilParaCadastrarRenda].renda = val;
+        localStorage.setItem('financas_premium_dados', JSON.stringify(usuarios));
+        document.getElementById('modalRendaRapida').classList.remove('active');
+        
+        efetivarDonoDoCelular(usuarios[perfilParaCadastrarRenda].nome);
+    }
+
+    function efetivarDonoDoCelular(nomeDoDono) {
+        localStorage.setItem('meuPerfilFixo_GuiaBolso', nomeDoDono);
+        sessionStorage.setItem('usuarioLogado', nomeDoDono);
+        document.getElementById('netflixOverlay').style.display = 'none';
+        showToast(`Bem-vindo, ${nomeDoDono}!`);
+        atualizarTela();
+        atualizarDashboardPremium();
+    }
+
+    function trocarPerfil() {
+        localStorage.removeItem('meuPerfilFixo_GuiaBolso');
+        sessionStorage.removeItem('usuarioLogado');
+        fecharModal();
+        verificarPerfilCelular();
     }
 
     // ==========================================
@@ -611,7 +752,7 @@
     // ==========================================
     // 🛠️ FUNÇÕES DE TELA E NAVEGAÇÃO
     // ==========================================
-    window.onload = function() { carregarTema(); carregarAvataresSeguros(); carregarDadosE_Layout(); atualizarCaixa(); atualizarTela(); inicializarDragAndDrop(); inicializarEmojis(); };
+    window.onload = function() { carregarTema(); carregarAvataresSeguros(); carregarDadosE_Layout(); atualizarCaixa(); atualizarTela(); inicializarDragAndDrop(); inicializarEmojis(); document.getElementById('inputRendaRapida').addEventListener('input', mascaraMoeda); };
 
     function toggleTheme() {
         const isDark = document.body.classList.toggle('dark-mode');
@@ -657,71 +798,164 @@
     document.getElementById('inputValorAddDinheiro').addEventListener('input', mascaraMoeda);
 
     // ==========================================
-    // 🛠️ USUÁRIOS E PERFIL
+    // 🛠️ USUÁRIOS, PERFIL E ESTÚDIO DE FOTOS
     // ==========================================
     function carregarAvataresSeguros() { const g = document.getElementById('gridAvatares'); for (let i = 1; i <= 20; i++) { let img = document.createElement('img'); img.src = `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${i+20}&backgroundColor=transparent`; img.className = 'avatar-option'; img.onclick = () => selecionarAvatarGrade(img, img.src); g.appendChild(img); } }
     
+    // ABRIR O PERFIL DE QUEM ESTÁ LOGADO AGORA (Correção do Bug 0)
+    function abrirModalPerfilLogado() {
+        let nomeLogado = sessionStorage.getItem('usuarioLogado');
+        let idx = usuarios.findIndex(u => u.nome === nomeLogado);
+        if (idx !== -1) abrirModal(idx);
+    }
+
     function abrirModal(idx = -1) {
-        editIndex = idx; document.getElementById('modalUsuario').classList.add('active'); document.querySelectorAll('.avatar-option').forEach(e => e.classList.remove('selected')); avatarFinalSelecionado = "";
+        editIndex = idx; 
+        document.getElementById('modalUsuario').classList.add('active'); 
+        document.querySelectorAll('.avatar-option').forEach(e => e.classList.remove('selected')); 
+        avatarFinalSelecionado = "";
+        isFazendoCrop = false;
+        
+        // Reseta as caixas de imagem
+        document.getElementById('profilePreviewBox').style.display = 'flex';
+        document.getElementById('cropArea').style.display = 'none';
+        document.getElementById('cropHintText').style.display = 'none';
+        document.getElementById('txtAvatarGrade').style.display = 'block';
+        document.getElementById('boxAvatarGrade').style.display = 'block';
+
         if (idx === -1) { 
-            document.getElementById('modalTitle').innerText = "Novo Integrante"; document.getElementById('inputNome').value = ""; document.getElementById('inputRenda').value = ""; document.getElementById('previewProfileImg').src = `https://api.dicebear.com/7.x/initials/svg?seed=Novo&backgroundColor=cbd5e1`; document.getElementById('btnExcluir').style.display = 'none'; 
+            document.getElementById('modalTitle').innerText = "Novo Integrante"; 
+            document.getElementById('inputNome').value = ""; 
+            document.getElementById('inputRenda').value = ""; 
+            document.getElementById('previewProfileImg').src = `https://api.dicebear.com/7.x/initials/svg?seed=Novo&backgroundColor=cbd5e1`; 
+            document.getElementById('btnExcluir').style.display = 'none'; 
+            document.getElementById('btnTrocarPerfil').style.display = 'none';
         } else { 
             let u = usuarios[idx]; 
-            let id = u.nome.toLowerCase().replace(/\s+/g, '');
-            let foto = u.avatarUrl === 'local' ? (localStorage.getItem(`foto_${id}`) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.nome)}&backgroundColor=e2e8f0`) : u.avatarUrl;
+            let foto = u.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.nome)}&backgroundColor=e2e8f0`;
             
-            document.getElementById('modalTitle').innerText = `Editando: ${u.nome}`; 
+            document.getElementById('modalTitle').innerText = `Meu Perfil`; 
             document.getElementById('inputNome').value = u.nome; 
             document.getElementById('inputRenda').value = u.renda.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); 
             avatarFinalSelecionado = foto; 
             document.getElementById('previewProfileImg').src = foto; 
             document.querySelectorAll('.avatar-option').forEach(img => { if(img.src === foto) img.classList.add('selected'); }); 
             document.getElementById('btnExcluir').style.display = 'block'; 
+            document.getElementById('btnTrocarPerfil').style.display = 'block';
         }
     }
     
     function fecharModal() { document.getElementById('modalUsuario').classList.remove('active'); document.getElementById('fileUpload').value = ""; }
-    function selecionarAvatarGrade(el, url) { document.querySelectorAll('.avatar-option').forEach(e => e.classList.remove('selected')); el.classList.add('selected'); avatarFinalSelecionado = url; document.getElementById('previewProfileImg').src = url; }
-    function previewFoto(input) { if (input.files && input.files[0]) { const r = new FileReader(); r.onload = e => { avatarFinalSelecionado = e.target.result; document.getElementById('previewProfileImg').src = avatarFinalSelecionado; }; r.readAsDataURL(input.files[0]); } }
+    
+    function selecionarAvatarGrade(el, url) { 
+        document.querySelectorAll('.avatar-option').forEach(e => e.classList.remove('selected')); 
+        el.classList.add('selected'); 
+        avatarFinalSelecionado = url; 
+        document.getElementById('previewProfileImg').src = url; 
+        isFazendoCrop = false;
+        document.getElementById('profilePreviewBox').style.display = 'flex';
+        document.getElementById('cropArea').style.display = 'none';
+        document.getElementById('cropHintText').style.display = 'none';
+    }
+    
+    // MINI-CROPPER DE IMAGEM
+    let cropX = 0, cropY = 0, isDragging = false, startX, startY;
+    
+    function previewFoto(input) { 
+        if (input.files && input.files[0]) { 
+            const r = new FileReader(); 
+            r.onload = e => { 
+                isFazendoCrop = true;
+                document.getElementById('profilePreviewBox').style.display = 'none';
+                document.getElementById('txtAvatarGrade').style.display = 'none';
+                document.getElementById('boxAvatarGrade').style.display = 'none';
+                document.getElementById('cropArea').style.display = 'block';
+                document.getElementById('cropHintText').style.display = 'block';
+                
+                const img = document.getElementById('cropImg');
+                img.src = e.target.result;
+                img.onload = () => {
+                    let sz = 150; 
+                    let scale = Math.max(sz / img.naturalWidth, sz / img.naturalHeight);
+                    img.style.width = (img.naturalWidth * scale) + 'px';
+                    img.style.height = (img.naturalHeight * scale) + 'px';
+                    cropX = 0; cropY = 0;
+                    img.style.transform = `translate(0px, 0px)`;
+                    
+                    img.onmousedown = img.ontouchstart = (ev) => {
+                        isDragging = true;
+                        startX = (ev.touches ? ev.touches[0].clientX : ev.clientX) - cropX;
+                        startY = (ev.touches ? ev.touches[0].clientY : ev.clientY) - cropY;
+                        ev.preventDefault();
+                    };
+                    document.onmousemove = document.ontouchmove = (ev) => {
+                        if(!isDragging) return;
+                        cropX = (ev.touches ? ev.touches[0].clientX : ev.clientX) - startX;
+                        cropY = (ev.touches ? ev.touches[0].clientY : ev.clientY) - startY;
+                        
+                        let maxW = parseFloat(img.style.width) - sz;
+                        let maxH = parseFloat(img.style.height) - sz;
+                        cropX = Math.min(0, Math.max(cropX, -maxW));
+                        cropY = Math.min(0, Math.max(cropY, -maxH));
+                        img.style.transform = `translate(${cropX}px, ${cropY}px)`;
+                    };
+                    document.onmouseup = document.ontouchend = () => isDragging = false;
+                };
+            }; 
+            r.readAsDataURL(input.files[0]); 
+        } 
+    }
+
+    function extrairFotoRecortada() {
+        let canvas = document.createElement('canvas');
+        canvas.width = 150; canvas.height = 150;
+        let ctx = canvas.getContext('2d');
+        let img = document.getElementById('cropImg');
+        let scale = Math.max(150 / img.naturalWidth, 150 / img.naturalHeight);
+        ctx.drawImage(img, Math.abs(cropX) / scale, Math.abs(cropY) / scale, 150/scale, 150/scale, 0, 0, 150, 150);
+        return canvas.toDataURL('image/jpeg', 0.6); // Comprime forte para o Firebase aceitar e sincronizar fácil!
+    }
     
     function salvarUsuario() {
         let n = document.getElementById('inputNome').value.trim(); 
         let r = parseMoeda(document.getElementById('inputRenda').value);
         if (!n || r <= 0) { showToast("Preencha corretamente!"); return; }
         
-        let id = n.toLowerCase().replace(/\s+/g, '');
+        // Se ele estiver alinhando a foto, extrai a imagem comprimida do quadro
+        if (isFazendoCrop) {
+            avatarFinalSelecionado = extrairFotoRecortada();
+        }
+
         let img = avatarFinalSelecionado || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(n)}&backgroundColor=e2e8f0`;
-        
-        localStorage.setItem(`foto_${id}`, img);
-        let imgParaNuvem = img.startsWith('data:image') ? 'local' : img;
 
         if (editIndex === -1) { 
-            usuarios.push({ nome: n, renda: r, avatarUrl: imgParaNuvem }); 
+            usuarios.push({ nome: n, renda: r, avatarUrl: img }); 
             showToast(`${n} adicionado!`); 
         } else { 
             let nomeAntigo = usuarios[editIndex].nome;
-            usuarios[editIndex] = { nome: n, renda: r, avatarUrl: imgParaNuvem }; 
+            usuarios[editIndex] = { nome: n, renda: r, avatarUrl: img }; 
             
-            let idAntigo = nomeAntigo.toLowerCase().replace(/\s+/g, '');
-            if (idAntigo !== id) {
-                let fotoAntiga = localStorage.getItem(`foto_${idAntigo}`);
-                if (fotoAntiga) { localStorage.setItem(`foto_${id}`, fotoAntiga); localStorage.removeItem(`foto_${idAntigo}`); }
-            }
             if (nomeAntigo !== n) {
                 transacoes.forEach(tx => { if (tx.categoria === `Pessoal - ${nomeAntigo}`) { tx.categoria = `Pessoal - ${n}`; } });
                 localStorage.setItem('financas_premium_transacoes', JSON.stringify(transacoes));
+                // Se mudou o próprio nome, atualiza a sessão
+                if (sessionStorage.getItem('usuarioLogado') === nomeAntigo) {
+                    sessionStorage.setItem('usuarioLogado', n);
+                    localStorage.setItem('meuPerfilFixo_GuiaBolso', n);
+                }
             }
-            showToast(`Atualizado!`); 
+            showToast(`Perfil Atualizado!`); 
         }
         avatarFinalSelecionado = null; 
-        salvarNoCache(); 
+        isFazendoCrop = false;
+        localStorage.setItem('financas_premium_dados', JSON.stringify(usuarios));
         fecharModal(); 
         atualizarTela(); 
         atualizarCaixa();
     }
     
     function solicitarExclusaoUser() { document.getElementById('textoConfExclusao').innerHTML = `Excluir <strong>${usuarios[editIndex].nome}</strong>?`; document.getElementById('boxBotoesConf').innerHTML = `<div style="display:flex;gap:10px;"><button class="btn-conf btn-no" style="flex:1;" onclick="cancelarExclusao()">Cancelar</button><button class="btn-conf btn-yes" style="flex:1;" onclick="confirmarExclusaoUser()">Sim, excluir</button></div>`; document.getElementById('confModal').classList.add('active'); }
-    function confirmarExclusaoUser() { usuarios.splice(editIndex, 1); salvarNoCache(); cancelarExclusao(); fecharModal(); atualizarTela(); atualizarCaixa(); showToast(`Excluído.`); }
+    function confirmarExclusaoUser() { usuarios.splice(editIndex, 1); localStorage.setItem('financas_premium_dados', JSON.stringify(usuarios)); cancelarExclusao(); fecharModal(); atualizarTela(); atualizarCaixa(); showToast(`Excluído.`); }
 
     // ==========================================
     // 🛠️ DRAG AND DROP
@@ -742,7 +976,6 @@
     function inicializarDragAndDrop() { const ops = { group: 'dashboard', handle: '.drag-handle', animation: 250, ghostClass: 'sortable-ghost', forceFallback: true, fallbackOnBody: true, onEnd: salvarLayout }; Sortable.create(document.getElementById('col-1'), ops); Sortable.create(document.getElementById('col-2'), ops); }
     function salvarLayout() { let layout = { col1: Array.from(document.getElementById('col-1').children).map(w => w.getAttribute('data-id')), col2: Array.from(document.getElementById('col-2').children).map(w => w.getAttribute('data-id')) }; localStorage.setItem('financas_premium_colunas_v1', JSON.stringify(layout)); }
     function carregarDadosE_Layout() { let d = localStorage.getItem('financas_premium_dados'); if(d) usuarios = JSON.parse(d); let l = localStorage.getItem('financas_premium_colunas_v1'); if (l) { let lay = JSON.parse(l); let c1 = document.getElementById('col-1'); let c2 = document.getElementById('col-2'); lay.col1.forEach(id => { let el = document.querySelector(`[data-id="${id}"]`); if(el) c1.appendChild(el); }); lay.col2.forEach(id => { let el = document.querySelector(`[data-id="${id}"]`); if(el) c2.appendChild(el); }); } }
-    function salvarNoCache() { localStorage.setItem('financas_premium_dados', JSON.stringify(usuarios)); }
 
     // ==========================================
     // 🛠️ TRANSAÇÕES E CAIXA
@@ -962,8 +1195,7 @@
         if (usuarios.length === 0) { uList.innerHTML += '<p style="color: var(--secondary-text); padding: 10px 0; font-size: 0.9rem;">Nenhum integrante cadastrado.</p>'; } 
         else {
             usuarios.forEach((u, i) => {
-                let id = u.nome.toLowerCase().replace(/\s+/g, '');
-                let foto = u.avatarUrl === 'local' ? (localStorage.getItem(`foto_${id}`) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.nome)}&backgroundColor=e2e8f0`) : u.avatarUrl;
+                let foto = u.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.nome)}&backgroundColor=e2e8f0`;
                 let p = Math.round(u.renda > 0 ? (vLiq[i] / u.renda) * 100 : 0);
                 uList.innerHTML += `<div class="user-list-card" onclick="abrirModal(${i})"><img src="${foto}" class="animated-avatar"><div class="user-info"><div class="user-header"><span class="user-name">${u.nome}</span><span class="user-income">${vLiq[i].toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></div><div class="progress-track" title="Restam ${p}%"><div class="progress-fill" style="width: ${p}%; background-color: ${coresPremium[i % coresPremium.length]};"></div></div></div><span class="percent-label">${p}%</span></div>`;
             });
@@ -975,14 +1207,19 @@
     function atualizarDashboardPremium() {
         let hora = new Date().getHours(); let saudacaoText = hora < 12 ? "☀️ Bom dia" : hora < 18 ? "☕ Boa tarde" : "🌙 Boa noite";
         
-        let nomeLogado = sessionStorage.getItem('usuarioLogado');
-        let dono = usuarios.find(u => u.nome === nomeLogado) || (usuarios.length > 0 ? usuarios[0] : null);
+        let nomeLogado = sessionStorage.getItem('usuarioLogado') || "";
+        let dono = usuarios.find(u => {
+            let nLista = u.nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            let nLogado = nomeLogado.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            return nLista === nLogado;
+        });
+
+        if (!dono && usuarios.length > 0) dono = usuarios[0];
 
         document.getElementById('saudacaoHeader').innerHTML = `${saudacaoText}, <strong>${dono ? dono.nome : "Visitante"}</strong>!`;
         
         if (dono) {
-            let idDono = dono.nome.toLowerCase().replace(/\s+/g, '');
-            let fotoDono = dono.avatarUrl === 'local' ? (localStorage.getItem(`foto_${idDono}`) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(dono.nome)}&backgroundColor=e2e8f0`) : dono.avatarUrl;
+            let fotoDono = dono.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(dono.nome)}&backgroundColor=e2e8f0`;
             document.getElementById('avatarHeader').src = fotoDono;
         }
 
@@ -1041,7 +1278,6 @@
 
         document.getElementById('totalCasaAcerto').innerText = gastoCasa.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
         
-        // --- 🌟 NOVO: BLOCO DE GASTOS PESSOAIS DINÂMICO ---
         let htmlPessoais = "";
         if (gPes1 > 0 || gPes2 > 0) {
             htmlPessoais = `<div style="display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap;">`;
@@ -1059,7 +1295,6 @@
             return; 
         }
 
-        // --- Lógica de Cálculo Realista (Subtraindo o pessoal antes da força de divisão) ---
         let livre1 = u1.renda - gPes1; if (livre1 < 0) livre1 = 0; 
         let livre2 = u2.renda - gPes2; if (livre2 < 0) livre2 = 0;
         let cor1 = 'var(--primary)'; let cor2 = 'var(--green)';
@@ -1069,10 +1304,9 @@
             return `<div class="split-card"><div class="split-header"><div class="split-title"><span>${icone}</span> ${titulo}</div></div><p class="split-desc">${desc}</p><div class="split-bar-container"><div class="split-bar-1" style="width: ${p1}%; background: ${cor1};">${p1.toFixed(0)}%</div><div class="split-bar-2" style="width: ${p2}%; background: ${cor2};">${p2.toFixed(0)}%</div></div><div class="split-details"><div class="split-user-col"><span class="split-user-name" style="color: ${cor1};">${u1.nome} paga:</span><span class="split-value">${paga1.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span><span class="split-result">Livre: ${sobra1.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></div><div class="split-user-col" style="text-align: right;"><span class="split-user-name" style="color: ${cor2};">${u2.nome} paga:</span><span class="split-value">${paga2.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span><span class="split-result">Livre: ${sobra2.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></div></div></div>`;
         };
 
-        let html = htmlPessoais; // Começa com as badges dos gastos individuais
+        let html = htmlPessoais; 
         html += criarCartao("Divisão 50/50", "Despesas da casa divididas ao meio.", "⚖️", gastoCasa / 2, gastoCasa / 2);
         
-        // Aqui a regra PROPORCIONAL agora usa a renda LÍQUIDA (renda - gasto pessoal)
         let forçaTotal = livre1 + livre2; 
         if (forçaTotal > 0) {
             html += criarCartao("Proporcional ao Saldo Livre", "Quem tem mais saldo sobrando (após gastos pessoais) assume uma fatia maior da casa.", "📈", gastoCasa * (livre1 / forçaTotal), gastoCasa * (livre2 / forçaTotal));
@@ -1192,26 +1426,12 @@
     // =======================================================
     iniciarApp();
 
-    if (sessionStorage.getItem('acessoGarantido') === 'true') {
-        document.getElementById('loginOverlay').style.display = 'none';
-    }
-
     function verificarAcesso() {
         const emailDigitado = document.getElementById('loginEmail').value.trim();
         const senhaDigitada = document.getElementById('loginSenha').value;
         const erroMsg = document.getElementById('erroLogin');
 
         firebase.auth().signInWithEmailAndPassword(emailDigitado, senhaDigitada)
-        .then((userCredential) => {
-            let usuarioSelecionado = emailDigitado.toLowerCase().includes("livio") ? "Livio" : "Lorraine";
-            sessionStorage.setItem('acessoGarantido', 'true');
-            sessionStorage.setItem('usuarioLogado', usuarioSelecionado);
-            document.getElementById('loginOverlay').style.display = 'none';
-
-            const sexo = localStorage.getItem(`sexo_${usuarioSelecionado}`) || 'M';
-            let saudacao = sexo === 'F' ? 'Bem-vinda' : 'Bem-vindo';
-            showToast(`${saudacao}, ${usuarioSelecionado}!`);
-        })
         .catch((error) => {
             erroMsg.style.display = 'block';
             erroMsg.innerText = "E-mail ou senha incorretos!";
@@ -1231,8 +1451,7 @@
 
     async function confirmarReset() {
         showToast("Limpando tudo...");
-        const cofreRef = db.collection("guiabolso").doc("bancodedados");
-        await cofreRef.set({ usuarios: [], transacoes: [], projetos: [] });
+        await db.collection("guiabolso").doc("bancodedados").set({ usuarios: [], transacoes: [], projetos: [] });
         localStorage.clear(); sessionStorage.clear();
         if ('caches' in window) { const keys = await caches.keys(); for (let key of keys) { await caches.delete(key); } }
         cancelarExclusao(); showToast("Aplicativo zerado com sucesso!");
@@ -1249,7 +1468,7 @@
         try {
             let credId = localStorage.getItem('biometriaAppId');
             if (!credId) {
-                const credential = await navigator.credentials.create({ publicKey: { challenge: gerarDesafio(), rp: { name: "Guia Bolso Casal", id: window.location.hostname }, user: { id: gerarDesafio(), name: "usuario", displayName: "Acesso Seguro" }, pubKeyCredParams: [{ type: "public-key", alg: -7 }], authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" }, timeout: 60000 } });
+                const credential = await navigator.credentials.create({ publicKey: { challenge: gerarDesafio(), rp: { name: "Guia Bolso", id: window.location.hostname }, user: { id: gerarDesafio(), name: "usuario", displayName: "Acesso Seguro" }, pubKeyCredParams: [{ type: "public-key", alg: -7 }], authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" }, timeout: 60000 } });
                 let idArray = Array.from(new Uint8Array(credential.rawId)); localStorage.setItem('biometriaAppId', JSON.stringify(idArray)); liberarTelaBiometria();
             } else {
                 let idArray = new Uint8Array(JSON.parse(credId)); await navigator.credentials.get({ publicKey: { challenge: gerarDesafio(), allowCredentials: [{ type: "public-key", id: idArray }], userVerification: "required" } }); liberarTelaBiometria();
@@ -1258,10 +1477,9 @@
     }
 
     function liberarTelaBiometria() {
-        const usuarioSelecionado = "Livio"; // Default pra biometria se não souber o email
-        sessionStorage.setItem('acessoGarantido', 'true'); sessionStorage.setItem('usuarioLogado', usuarioSelecionado);
+        sessaoAtiva = true;
         document.getElementById('loginOverlay').style.display = 'none';
-        showToast(`Bem-vindo de volta (via Biometria)!`);
+        verificarPerfilCelular(); 
     }
 
     // ==========================================
