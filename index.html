@@ -203,8 +203,8 @@
         <div style="background: #1e293b; padding: 2rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); width: 90%; max-width: 400px;">
             <h2 style="margin-bottom: 1rem;">🔐 Guia Bolso</h2>
             <p style="color: #94a3b8; margin-bottom: 1.5rem;">Identifique-se para acessar o cofre da família</p>
-            <input type="email" id="loginEmail" autocomplete="username" placeholder="E-mail da Família" style="width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 1px solid #334155; margin-bottom: 1rem; box-sizing: border-box; font-size: 16px;">
-            <input type="password" id="loginSenha" autocomplete="current-password" placeholder="Digite a senha" style="width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 1px solid #334155; margin-bottom: 1.5rem; box-sizing: border-box; font-size: 16px;">
+            <input type="email" id="loginEmail" autocomplete="off" placeholder="E-mail da Família" style="width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 1px solid #334155; margin-bottom: 1rem; box-sizing: border-box; font-size: 16px;">
+            <input type="password" id="loginSenha" autocomplete="new-password" placeholder="Digite a senha" style="width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 1px solid #334155; margin-bottom: 1.5rem; box-sizing: border-box; font-size: 16px;">
             <button onclick="verificarAcesso()" style="width: 100%; padding: 12px; border-radius: 10px; background: #22c55e; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-bottom: 10px;">Entrar</button>
             <button onclick="usarBiometria()" style="width: 100%; padding: 12px; border-radius: 10px; background: #3b82f6; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">👆 Usar Impressão Digital</button>
             <p id="erroLogin" style="color: #ef4444; margin-top: 1rem; font-size: 14px; display: none;">E-mail ou senha incorretos!</p>
@@ -1575,16 +1575,19 @@
     iniciarApp();
 
     function verificarAcesso() {
-        const emailDigitado = document.getElementById('loginEmail').value.trim();
-        const senhaDigitada = document.getElementById('loginSenha').value;
+        const campoEmail = document.getElementById('loginEmail');
+        const campoSenha = document.getElementById('loginSenha');
+        
+        const emailDigitado = campoEmail.value.trim();
+        const senhaDigitada = campoSenha.value;
         const erroMsg = document.getElementById('erroLogin');
 
-        // Apaga a senha da tela IMEDIATAMENTE antes do Firebase agir
-        document.getElementById('loginSenha').value = ''; 
+        campoSenha.value = ''; 
+        campoSenha.blur(); // Abaixa o teclado e tira o foco da senha
+        campoEmail.blur(); // Abaixa o teclado e tira o foco do e-mail
 
         firebase.auth().signInWithEmailAndPassword(emailDigitado, senhaDigitada)
         .then(() => {
-            // A MÁGICA: Em vez de esperar o Firebase fechar a tela, nós mesmos abrimos a porta à força!
             liberarTelaBiometria(); 
         })
         .catch((error) => {
