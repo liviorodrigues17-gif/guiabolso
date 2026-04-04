@@ -123,7 +123,7 @@
         
         .conf-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center; } .conf-overlay.active { display: flex; animation: fadeIn 0.2s; } .conf-modal { background: var(--card); color: var(--text); border-radius: 20px; padding: 25px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.2); animation: scaleUp 0.2s; } .conf-actions { display: flex; gap: 10px; margin-top: 20px; } .btn-conf { flex: 1; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.2s; } .btn-no { background: var(--input-bg); color: var(--text); } .btn-yes { background: var(--red); color: white; }
         
-        #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 5000; width: 90%; max-width: 420px; text-align: center; pointer-events: none; } .toast { background: #1f2937; color: white; padding: 14px 24px; border-radius: 30px; margin: 8px auto; display: inline-block; font-size: 1rem; transition: 0.5s; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        #toast-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10001; width: 90%; max-width: 420px; text-align: center; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; } .toast { background: #1f2937; color: white; padding: 14px 24px; border-radius: 30px; margin: 8px auto; display: inline-block; font-size: 1rem; transition: 0.5s; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         
         .transaction-card { background: var(--card); border-radius: 16px; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0;} .transaction-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
         .tx-left { display: flex; align-items: center; gap: 15px; flex: 1; overflow: hidden; } .tx-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--input-bg); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; } .tx-info-box { display: flex; flex-direction: column; gap: 4px; overflow: hidden; } .tx-title { font-weight: 600; font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text);}
@@ -198,21 +198,27 @@
 </head>
 
 <body>
+    <div id="toast-container"></div>
   
     <div id="loginOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: sans-serif;">
         <div style="background: #1e293b; padding: 2rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); width: 90%; max-width: 400px;">
             <h2 style="margin-bottom: 1rem;">🔐 Guia Bolso</h2>
             <p style="color: #94a3b8; margin-bottom: 1.5rem;">Identifique-se para acessar o cofre da família</p>
+
             <input type="email" name="fake_email" style="display:none;" aria-hidden="true" autocomplete="email">
             <input type="password" name="fake_password" style="display:none;" aria-hidden="true" autocomplete="current-password">
+
             <input type="email" id="loginEmail" autocomplete="nope" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="E-mail da Família" style="width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 1px solid #334155; margin-bottom: 1rem; box-sizing: border-box; font-size: 16px;">
             <input type="password" id="loginSenha" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Digite a senha" style="width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 1px solid #334155; margin-bottom: 1.5rem; box-sizing: border-box; font-size: 16px;">
+
             <button onclick="verificarAcesso()" style="width: 100%; padding: 12px; border-radius: 10px; background: #22c55e; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-bottom: 10px;">Entrar</button>
-            <button onclick="usarBiometria()" style="width: 100%; padding: 12px; border-radius: 10px; background: #3b82f6; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">👆 Usar Impressão Digital</button>
+
+            <button onclick="tentarLoginBiometria()" style="width: 100%; padding: 12px; border-radius: 10px; background: #3b82f6; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">👆 Usar Impressão Digital</button>
+
             <p id="erroLogin" style="color: #ef4444; margin-top: 1rem; font-size: 14px; display: none;">E-mail ou senha incorretos!</p>
         </div>
     </div>
-
+    
     <div id="setupInicialOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 9100; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; animation: fadeIn 0.5s;">
         <div style="background: #1e293b; padding: 2.5rem; border-radius: 20px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);">
             <div style="font-size: 3rem; margin-bottom: 10px;">👋</div>
@@ -253,7 +259,6 @@
     </div>
     
     <div class="app-container" id="appMainContainer" style="display: none;">
-        <div id="toast-container"></div>
 
         <nav class="bottom-nav">
             <div class="nav-group">
@@ -1660,6 +1665,17 @@
     // ==========================================
     const gerarDesafio = () => { const array = new Uint8Array(32); window.crypto.getRandomValues(array); return array; };
 
+    // Nova função chamada pelo botão azul!
+    function tentarLoginBiometria() {
+        let temBiometria = localStorage.getItem('biometriaAppId');
+        if (!temBiometria) {
+            // A sua regra bloqueando intrusos e avisando:
+            showToast("⚠️ Primeiro acesso: digite e-mail e senha para habilitar a digital!");
+        } else {
+            usarBiometria(false); // Apenas LÊ a digital
+        }
+    }
+
     async function usarBiometria(isCadastrando = false) {
         if (!window.PublicKeyCredential) { 
             if (isCadastrando) liberarTelaBiometria();
@@ -1667,21 +1683,22 @@
         }
         try {
             let credId = localStorage.getItem('biometriaAppId');
-            if (!credId) {
-                // CRIAÇÃO: O navegador abre a caixa oficial dele aqui
+            
+            if (isCadastrando) {
+                // 🔐 MODO DE CADASTRO: Ocorre SÓ DEPOIS do modal (quando a senha já está certa)
                 const credential = await navigator.credentials.create({ publicKey: { challenge: gerarDesafio(), rp: { name: "Guia Bolso", id: window.location.hostname }, user: { id: gerarDesafio(), name: "usuario", displayName: "Acesso Seguro" }, pubKeyCredParams: [{ type: "public-key", alg: -7 }], authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" }, timeout: 60000 } });
                 let idArray = Array.from(new Uint8Array(credential.rawId)); 
                 localStorage.setItem('biometriaAppId', JSON.stringify(idArray)); 
                 liberarTelaBiometria();
             } else {
-                // LEITURA: O navegador abre a caixa de "Encoste o dedo" aqui
+                // 🔓 MODO DE LEITURA: Ocorre quando clica no botão azul (só verifica)
+                if (!credId) return; // Trava extra
                 let idArray = new Uint8Array(JSON.parse(credId)); 
                 await navigator.credentials.get({ publicKey: { challenge: gerarDesafio(), allowCredentials: [{ type: "public-key", id: idArray }], userVerification: "required" } }); 
                 liberarTelaBiometria();
             }
         } catch (erro) { 
             console.log("Biometria cancelada ou falhou.", erro); 
-            // Se falhou no cadastro, entra no app assim mesmo
             if (isCadastrando) liberarTelaBiometria();
         }
     }
