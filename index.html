@@ -6,7 +6,7 @@
     <title>GUIA DO BOLSO</title>
     
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#5c2092">
+    <meta name="theme-color" content="#0f172a">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
 
@@ -104,7 +104,7 @@
         
         .bottom-nav { position: fixed; background: var(--nav-bg); z-index: 1000; transition: 0.3s; box-shadow: 0 4px 20px rgba(0,0,0,0.1); display: flex;} .nav-divider { background: var(--chart-empty); }
         
-        @media (max-width: 767px) { .app-container { padding-bottom: 80px; } .bottom-nav { bottom: 0; left: 0; width: 100%; justify-content: center; padding: 10px 15px 15px; border-top-left-radius: 20px; border-top-right-radius: 20px; overflow-x: auto; gap: 15px; } .bottom-nav::-webkit-scrollbar { height: 4px; } .bottom-nav::-webkit-scrollbar-thumb { background: var(--chart-empty); border-radius: 10px; } .nav-group { display: flex; gap: 15px; justify-content: center; width: 100%; } .nav-divider { width: 2px; height: 30px; margin: auto 5px; } .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--secondary-text); font-size: 0.75rem; cursor: pointer; min-width: 60px; white-space: nowrap; } .nav-item.active { color: var(--primary); font-weight: 600; } .nav-item span { font-size: 1.5rem; margin-bottom: 2px; } }
+        @media (max-width: 767px) { .bottom-nav { bottom: 0; left: 0; width: 100%; justify-content: center; padding: 10px 15px 15px; border-top-left-radius: 20px; border-top-right-radius: 20px; overflow-x: auto; gap: 15px; } .bottom-nav::-webkit-scrollbar { height: 4px; } .bottom-nav::-webkit-scrollbar-thumb { background: var(--chart-empty); border-radius: 10px; } .nav-group { display: flex; gap: 15px; justify-content: center; width: 100%; } .nav-divider { width: 2px; height: 30px; margin: auto 5px; } .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--secondary-text); font-size: 0.75rem; cursor: pointer; min-width: 60px; white-space: nowrap; } .nav-item.active { color: var(--primary); font-weight: 600; } .nav-item span { font-size: 1.5rem; margin-bottom: 2px; } }
         @media (min-width: 768px) { .app-container { padding-left: 90px; padding-bottom: 30px; } .bottom-nav { top: 50%; left: 15px; bottom: auto; transform: translateY(-50%); width: 75px; height: auto; border-radius: 20px; padding: 20px 0; flex-direction: column; overflow: hidden; align-items: center; } .bottom-nav:hover { width: 230px; align-items: stretch; } .nav-group { display: flex; flex-direction: column; gap: 10px; width: 100%; } .nav-divider { width: 70%; height: 2px; margin: 15px auto; transition: 0.3s; flex-shrink: 0;} .bottom-nav:hover .nav-divider { width: 90%; } .nav-item { display: flex; flex-direction: row; align-items: center; padding: 12px 20px; color: var(--secondary-text); cursor: pointer; transition: 0.2s; white-space: nowrap; width: 100%;} .nav-item:hover { background: var(--input-bg); color: var(--primary); } .nav-item.active { color: var(--primary); font-weight: 600; border-left: 4px solid var(--primary); padding-left: 16px; } .nav-item span { font-size: 1.5rem; min-width: 35px; text-align: center;} .nav-item p { font-size: 0.95rem; font-weight: 500; opacity: 0; transition: 0.3s; margin: 0; margin-left: 10px;} .bottom-nav:hover .nav-item p { opacity: 1; } }
         
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 2000; justify-content: center; align-items: center; } .modal-overlay.active { display: flex; animation: fadeIn 0.2s; }
@@ -112,7 +112,6 @@
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; } .modal-header h3 { font-size: 1.25rem; color: var(--text); } .close-btn { background: none; border: none; font-size: 1.8rem; cursor: pointer; color: var(--secondary-text); line-height: 1;}
         .profile-upload-area { display: flex; flex-direction: column; align-items: center; margin-bottom: 15px; } .profile-circle { width: 90px; height: 90px; border-radius: 50%; background: var(--input-bg); border: 3px solid var(--primary); cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(92, 32, 146, 0.2); transition: 0.2s; flex-shrink: 0;} .profile-circle:hover { transform: scale(1.05); } .profile-circle img { width: 100%; height: 100%; object-fit: cover; } .upload-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.6); color: white; font-size: 0.65rem; text-align: center; padding: 4px 0; font-weight: 600; }
         
-        /* 📸 ESTILOS DO MINI-CROPPER */
         .crop-container { display: none; width: 150px; height: 150px; border-radius: 50%; border: 3px solid var(--primary); margin: 0 auto 15px; overflow: hidden; position: relative; background: var(--input-bg); touch-action: none; box-shadow: 0 4px 15px rgba(92, 32, 146, 0.3);}
         .crop-img { position: absolute; cursor: move; transform-origin: top left; }
         .crop-hint { font-size: 0.75rem; color: var(--primary); text-align: center; margin-top: -10px; margin-bottom: 15px; font-weight: 600; display: none; animation: fadeIn 0.3s;}
@@ -199,13 +198,13 @@
 
 <body>
   
-    <div id="loginOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: sans-serif;">
+    <div id="loginOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: sans-serif;">
         <div style="background: #1e293b; padding: 2rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); width: 90%; max-width: 400px;">
             <h2 style="margin-bottom: 1rem;">🔐 Guia Bolso</h2>
             <p style="color: #94a3b8; margin-bottom: 1.5rem;">Identifique-se para acessar o cofre da família</p>
             <input type="email" id="loginEmail" autocomplete="username" placeholder="E-mail da Família" style="width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 1px solid #334155; margin-bottom: 1rem; box-sizing: border-box; font-size: 16px;">
             <input type="password" id="loginSenha" autocomplete="current-password" placeholder="Digite a senha" style="width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 1px solid #334155; margin-bottom: 1.5rem; box-sizing: border-box; font-size: 16px;">
-            <button onclick="verificarAcesso()" style="width: 100%; padding: 12px; border-radius: 10px; background: #22c55e; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-bottom: 10px;">Entrar Seguramente</button>
+            <button onclick="verificarAcesso()" style="width: 100%; padding: 12px; border-radius: 10px; background: #22c55e; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-bottom: 10px;">Entrar</button>
             <button onclick="usarBiometria()" style="width: 100%; padding: 12px; border-radius: 10px; background: #3b82f6; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">👆 Usar Impressão Digital</button>
             <p id="erroLogin" style="color: #ef4444; margin-top: 1rem; font-size: 14px; display: none;">E-mail ou senha incorretos!</p>
         </div>
@@ -221,7 +220,7 @@
         </div>
     </div>
     
-    <div id="netflixOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 9000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; animation: fadeIn 0.5s;">
+    <div id="netflixOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 9000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; animation: fadeIn 0.5s;">
         <h2 style="margin-bottom: 2rem; font-size: 1.8rem; font-weight: 600;">Quem está usando este celular?</h2>
         <div id="netflixGrid" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; max-width: 600px;">
             </div>
@@ -236,8 +235,21 @@
             <button class="btn-save" style="width: 100%; margin-top: 10px;" onclick="salvarRendaRapida()">Confirmar e Entrar</button>
         </div>
     </div>
+    <div class="modal-overlay" id="modalNovoPerfil" style="z-index: 9500;">
+        <div class="modal-content" style="max-width: 350px;">
+            <div class="modal-header">
+                <h3 style="margin-bottom: 0;">Novo Integrante</h3>
+                <button class="close-btn" onclick="fecharModalNovoPerfil()">×</button>
+            </div>
+            <p style="font-size: 0.9rem; color: var(--secondary-text); margin-bottom: 15px;">Como devemos chamar essa pessoa?</p>
+            <div class="form-group">
+                <input type="text" id="inputNovoPerfilNome" class="form-control" placeholder="Digite o nome" style="font-size: 1.1rem; text-align: center;">
+            </div>
+            <button class="btn-save" style="width: 100%; margin-top: 10px;" onclick="salvarNovoPerfilNetflix()">Criar Perfil</button>
+        </div>
+    </div>
     
-    <div class="app-container">
+    <div class="app-container" id="appMainContainer" style="display: none;">
         <div id="toast-container"></div>
 
         <nav class="bottom-nav">
@@ -392,7 +404,6 @@
                     <img id="cropImg" class="crop-img" src="">
                 </div>
                 <p class="crop-hint" id="cropHintText">Arraste a foto para alinhar 👆</p>
-                
                 <input type="file" id="fileUpload" style="display: none;" accept="image/*" onchange="previewFoto(this)">
             </div>
 
@@ -505,7 +516,6 @@
     const chartOptions = { responsive: true, cutout: '75%', maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, animation: { duration: 600 } };
     let sortables = [];
     
-    // VARIÁVEIS DO SISTEMA NETFLIX
     let isAppIniciado = false;
     let sessaoAtiva = false;
     let perfilParaCadastrarRenda = -1;
@@ -621,10 +631,12 @@
         if (donoDoCelular && usuarioAindaExiste) {
             document.getElementById('setupInicialOverlay').style.display = 'none';
             document.getElementById('netflixOverlay').style.display = 'none';
+            document.getElementById('appMainContainer').style.display = 'block'; // MOSTRA O APP AQUI
             sessionStorage.setItem('usuarioLogado', donoDoCelular);
             atualizarDashboardPremium();
         } else {
             document.getElementById('setupInicialOverlay').style.display = 'none';
+            document.getElementById('appMainContainer').style.display = 'none'; // ESCONDE O APP AQUI
             document.getElementById('netflixOverlay').style.display = 'flex';
             renderizarTelaNetflix();
         }
@@ -665,14 +677,30 @@
     }
 
     function novoPerfilNetflix() {
-        let nome = prompt("Qual o nome do novo integrante? (Apenas o nome)");
-        if (nome && nome.trim() !== "") {
-            nome = nome.trim();
-            nome = nome.charAt(0).toUpperCase() + nome.slice(1); 
-            usuarios.push({ nome: nome, renda: 0, avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(nome)}&backgroundColor=e2e8f0` });
-            localStorage.setItem('financas_premium_dados', JSON.stringify(usuarios));
-            renderizarTelaNetflix();
+        // Adeus prompt feio do navegador! Chama a modal premium:
+        document.getElementById('inputNovoPerfilNome').value = '';
+        document.getElementById('modalNovoPerfil').classList.add('active');
+    }
+
+    function fecharModalNovoPerfil() {
+        document.getElementById('modalNovoPerfil').classList.remove('active');
+    }
+
+    function salvarNovoPerfilNetflix() {
+        let nome = document.getElementById('inputNovoPerfilNome').value.trim();
+        
+        if (nome === "") {
+            showToast("Por favor, digite um nome válido!");
+            return;
         }
+        
+        nome = nome.charAt(0).toUpperCase() + nome.slice(1); 
+        usuarios.push({ nome: nome, renda: 0, avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(nome)}&backgroundColor=e2e8f0` });
+        
+        localStorage.setItem('financas_premium_dados', JSON.stringify(usuarios));
+        
+        fecharModalNovoPerfil();
+        renderizarTelaNetflix();
     }
 
     function clicarPerfilNetflix(idx) {
@@ -702,6 +730,7 @@
         localStorage.setItem('meuPerfilFixo_GuiaBolso', nomeDoDono);
         sessionStorage.setItem('usuarioLogado', nomeDoDono);
         document.getElementById('netflixOverlay').style.display = 'none';
+        document.getElementById('appMainContainer').style.display = 'block'; // MOSTRA O APP DE VERDADE
         showToast(`Bem-vindo, ${nomeDoDono}!`);
         atualizarTela();
         atualizarDashboardPremium();
@@ -720,12 +749,15 @@
     async function iniciarNotificacoes() {
       try {
         const permissao = await Notification.requestPermission();
-        if (permissao !== "granted") { console.log("Permissão negada"); return; }
+        if (permissao !== "granted") { showToast("Permissão negada pelo seu celular."); return; }
         const registration = await navigator.serviceWorker.register("sw.js");
         const messaging = firebase.messaging();
         const token = await messaging.getToken({ vapidKey: "BIvSshhBpe7qbCZ7mpXk4Ng5LDKg3IYQWXSyTO2yViB7U-PzqJtWAxMqdVUkHV-X5H5E6I5kH7h1DFPZd5XAQGM", serviceWorkerRegistration: registration });
         if (token) { await db.collection("tokens").doc(token).set({ token }); showToast("Notificações Ativadas!");}
-      } catch (erro) { console.log("Erro notificações:", erro); }
+      } catch (erro) { 
+          console.log("Erro notificações:", erro); 
+          showToast("Erro ao ativar. Tente reinstalar o app ou checar a permissão no Safari/Chrome."); 
+      }
     }
 
     function pedirPermissaoNotificacao() { iniciarNotificacoes(); }
@@ -802,7 +834,6 @@
     // ==========================================
     function carregarAvataresSeguros() { const g = document.getElementById('gridAvatares'); for (let i = 1; i <= 20; i++) { let img = document.createElement('img'); img.src = `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${i+20}&backgroundColor=transparent`; img.className = 'avatar-option'; img.onclick = () => selecionarAvatarGrade(img, img.src); g.appendChild(img); } }
     
-    // ABRIR O PERFIL DE QUEM ESTÁ LOGADO AGORA (Correção do Bug 0)
     function abrirModalPerfilLogado() {
         let nomeLogado = sessionStorage.getItem('usuarioLogado');
         let idx = usuarios.findIndex(u => u.nome === nomeLogado);
@@ -816,7 +847,6 @@
         avatarFinalSelecionado = "";
         isFazendoCrop = false;
         
-        // Reseta as caixas de imagem
         document.getElementById('profilePreviewBox').style.display = 'flex';
         document.getElementById('cropArea').style.display = 'none';
         document.getElementById('cropHintText').style.display = 'none';
@@ -858,7 +888,6 @@
         document.getElementById('cropHintText').style.display = 'none';
     }
     
-    // MINI-CROPPER DE IMAGEM
     let cropX = 0, cropY = 0, isDragging = false, startX, startY;
     
     function previewFoto(input) { 
@@ -913,17 +942,26 @@
         let img = document.getElementById('cropImg');
         let scale = Math.max(150 / img.naturalWidth, 150 / img.naturalHeight);
         ctx.drawImage(img, Math.abs(cropX) / scale, Math.abs(cropY) / scale, 150/scale, 150/scale, 0, 0, 150, 150);
-        return canvas.toDataURL('image/jpeg', 0.6); // Comprime forte para o Firebase aceitar e sincronizar fácil!
+        return canvas.toDataURL('image/jpeg', 0.6); 
     }
     
     function salvarUsuario() {
         let n = document.getElementById('inputNome').value.trim(); 
         let r = parseMoeda(document.getElementById('inputRenda').value);
-        if (!n || r <= 0) { showToast("Preencha corretamente!"); return; }
         
-        // Se ele estiver alinhando a foto, extrai a imagem comprimida do quadro
+        // 🐛 BUG CORRIGIDO: Antes ele bloqueava se a renda fosse 0. Agora ele deixa passar!
+        if (!n || isNaN(r)) { showToast("Preencha o nome corretamente!"); return; }
+        
         if (isFazendoCrop) {
-            avatarFinalSelecionado = extrairFotoRecortada();
+            try {
+                let canvas = document.createElement('canvas'); canvas.width = 150; canvas.height = 150;
+                let ctx = canvas.getContext('2d'); let img = document.getElementById('cropImg');
+                if (img.naturalWidth) {
+                    let scale = Math.max(150 / img.naturalWidth, 150 / img.naturalHeight);
+                    ctx.drawImage(img, Math.abs(cropX) / scale, Math.abs(cropY) / scale, 150/scale, 150/scale, 0, 0, 150, 150);
+                    avatarFinalSelecionado = canvas.toDataURL('image/jpeg', 0.6);
+                }
+            } catch(e) {}
         }
 
         let img = avatarFinalSelecionado || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(n)}&backgroundColor=e2e8f0`;
@@ -938,7 +976,6 @@
             if (nomeAntigo !== n) {
                 transacoes.forEach(tx => { if (tx.categoria === `Pessoal - ${nomeAntigo}`) { tx.categoria = `Pessoal - ${n}`; } });
                 localStorage.setItem('financas_premium_transacoes', JSON.stringify(transacoes));
-                // Se mudou o próprio nome, atualiza a sessão
                 if (sessionStorage.getItem('usuarioLogado') === nomeAntigo) {
                     sessionStorage.setItem('usuarioLogado', n);
                     localStorage.setItem('meuPerfilFixo_GuiaBolso', n);
@@ -1454,6 +1491,10 @@
         await db.collection("guiabolso").doc("bancodedados").set({ usuarios: [], transacoes: [], projetos: [] });
         localStorage.clear(); sessionStorage.clear();
         if ('caches' in window) { const keys = await caches.keys(); for (let key of keys) { await caches.delete(key); } }
+        
+        // 🔫 O TIRO DE MISERICÓRDIA NO FIREBASE (Mata o login automático)
+        try { await firebase.auth().signOut(); } catch(e) {} 
+        
         cancelarExclusao(); showToast("Aplicativo zerado com sucesso!");
         setTimeout(() => { window.location.reload(true); }, 1000);
     }
