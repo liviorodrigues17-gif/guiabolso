@@ -19,6 +19,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging-compat.js"></script>
     
     <script>
         if ('serviceWorker' in navigator) {
@@ -501,7 +502,7 @@
     </div>
 
 <script>
-    // ==========================================
+  // ==========================================
     // 🛠️ VARIÁVEIS GLOBAIS
     // ==========================================
     let usuarios = []; 
@@ -521,6 +522,13 @@
     let perfilParaCadastrarRenda = -1;
 
     // ==========================================
+    // 📸 MOTOR DE FOTO (MEMÓRIA INTERNA)
+    // ==========================================
+    function getFoto(u) {
+        if (!u) return "";
+        return u.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.nome)}&backgroundColor=e2e8f0`;
+    }
+    // ==========================================
     // ☁️ FIREBASE (INICIALIZAÇÃO)
     // ==========================================
     const firebaseConfig = {
@@ -535,7 +543,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     
-    // 1. O CADEADO DA SESSÃO (Impede o Firebase de abrir o app sozinho)
     firebase.auth().onAuthStateChanged((user) => {
         const overlayLogin = document.getElementById('loginOverlay');
         if (user) {
@@ -544,15 +551,12 @@
             let temBiometria = localStorage.getItem('biometriaAppId');
 
             if (cofreAberto) {
-                // Já destrancou nesta sessão! Pode entrar.
                 if (overlayLogin) overlayLogin.style.display = 'none';
                 verificarPerfilCelular();
             } else if (temBiometria) {
-                // Firebase logou, mas a sessão é nova (app acabou de abrir). Pede a digital!
                 if (overlayLogin) overlayLogin.style.display = 'flex';
                 setTimeout(() => { usarBiometria(); }, 500);
             } else {
-                // Não tem biometria cadastrada no celular. Entra direto.
                 sessionStorage.setItem('cofreAberto', 'true');
                 if (overlayLogin) overlayLogin.style.display = 'none';
                 verificarPerfilCelular();
@@ -620,6 +624,16 @@
         document.addEventListener("visibilitychange", () => {
             if (document.visibilityState === "visible") {
                 db.disableNetwork().then(() => db.enableNetwork());
+                
+                let temBiometria = localStorage.getItem('biometriaAppId');
+                let donoDoCelular = localStorage.getItem('meuPerfilFixo_GuiaBolso');
+                
+                if (sessaoAtiva && temBiometria && donoDoCelular) {
+                    document.getElementById('appMainContainer').style.display = 'none';
+                    document.getElementById('netflixOverlay').style.display = 'flex';
+                    sessionStorage.removeItem('cofreAberto'); 
+                    setTimeout(() => { usarBiometria(); }, 400);
+                }
             }
         });
     }
@@ -647,12 +661,12 @@
         if (donoDoCelular && usuarioAindaExiste) {
             document.getElementById('setupInicialOverlay').style.display = 'none';
             document.getElementById('netflixOverlay').style.display = 'none';
-            document.getElementById('appMainContainer').style.display = 'block'; // MOSTRA O APP AQUI
+            document.getElementById('appMainContainer').style.display = 'block'; 
             sessionStorage.setItem('usuarioLogado', donoDoCelular);
             atualizarDashboardPremium();
         } else {
             document.getElementById('setupInicialOverlay').style.display = 'none';
-            document.getElementById('appMainContainer').style.display = 'none'; // ESCONDE O APP AQUI
+            document.getElementById('appMainContainer').style.display = 'none'; 
             document.getElementById('netflixOverlay').style.display = 'flex';
             renderizarTelaNetflix();
         }
@@ -677,7 +691,7 @@
         grid.innerHTML = '';
 
         usuarios.forEach((u, idx) => {
-            let foto = u.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.nome)}&backgroundColor=e2e8f0`;
+            let foto = getFoto(u);
             grid.innerHTML += `
             <div class="netflix-profile" style="display: flex; flex-direction: column; align-items: center;" onclick="clicarPerfilNetflix(${idx})">
                 <img src="${foto}" style="width: 100px; height: 100px; border-radius: 15px; margin-bottom: 12px; object-fit: cover; box-shadow: 0 10px 20px rgba(0,0,0,0.5);">
@@ -693,7 +707,6 @@
     }
 
     function novoPerfilNetflix() {
-        // Adeus prompt feio do navegador! Chama a modal premium:
         document.getElementById('inputNovoPerfilNome').value = '';
         document.getElementById('modalNovoPerfil').classList.add('active');
     }
@@ -705,10 +718,7 @@
     function salvarNovoPerfilNetflix() {
         let nome = document.getElementById('inputNovoPerfilNome').value.trim();
         
-        if (nome === "") {
-            showToast("Por favor, digite um nome válido!");
-            return;
-        }
+        if (nome === "") { showToast("Por favor, digite um nome válido!"); return; }
         
         nome = nome.charAt(0).toUpperCase() + nome.slice(1); 
         usuarios.push({ nome: nome, renda: 0, avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(nome)}&backgroundColor=e2e8f0` });
@@ -746,7 +756,7 @@
         localStorage.setItem('meuPerfilFixo_GuiaBolso', nomeDoDono);
         sessionStorage.setItem('usuarioLogado', nomeDoDono);
         document.getElementById('netflixOverlay').style.display = 'none';
-        document.getElementById('appMainContainer').style.display = 'block'; // MOSTRA O APP DE VERDADE
+        document.getElementById('appMainContainer').style.display = 'block'; 
         showToast(`Bem-vindo, ${nomeDoDono}!`);
         atualizarTela();
         atualizarDashboardPremium();
@@ -763,16 +773,14 @@
     // 🔔 NOTIFICAÇÕES
     // ==========================================
    async function iniciarNotificacoes() {
-        // 1. Avisa na tela se o navegador do celular for antigo/incompatível
         if (!("Notification" in window)) {
-            showToast("⚠️ Seu aparelho ou navegador atual não suporta notificações.");
+            showToast("⚠️ Seu aparelho ou navegador não suporta notificações.");
             return;
         }
 
         try {
             const permissao = await Notification.requestPermission();
             
-            // 2. Avisa na tela se o usuário bloqueou nas configurações
             if (permissao !== "granted") { 
                 showToast("❌ Permissão negada nas configurações do celular."); 
                 return; 
@@ -792,7 +800,6 @@
             
         } catch (erro) { 
             console.log("Erro notificações:", erro); 
-            // 3. O GRANDE SEGREDO: Mostra na tela do celular qual foi o erro técnico do Google/Apple
             showToast("Erro técnico: " + erro.message); 
         }
     }
@@ -898,7 +905,7 @@
             document.getElementById('btnTrocarPerfil').style.display = 'none';
         } else { 
             let u = usuarios[idx]; 
-            let foto = u.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.nome)}&backgroundColor=e2e8f0`;
+            let foto = getFoto(u);
             
             document.getElementById('modalTitle').innerText = `Meu Perfil`; 
             document.getElementById('inputNome').value = u.nome; 
@@ -954,7 +961,7 @@
                     };
                     document.onmousemove = document.ontouchmove = (ev) => {
                         if(!isDragging) return;
-                        if (ev.touches) ev.preventDefault(); // 🛑 BLOQUEIA O SCROLL DO CELULAR!
+                        if (ev.touches) ev.preventDefault(); 
                         
                         cropX = (ev.touches ? ev.touches[0].clientX : ev.clientX) - startX;
                         cropY = (ev.touches ? ev.touches[0].clientY : ev.clientY) - startY;
@@ -972,16 +979,6 @@
         } 
     }
 
-    function extrairFotoRecortada() {
-        let canvas = document.createElement('canvas');
-        canvas.width = 150; canvas.height = 150;
-        let ctx = canvas.getContext('2d');
-        let img = document.getElementById('cropImg');
-        let scale = Math.max(150 / img.naturalWidth, 150 / img.naturalHeight);
-        ctx.drawImage(img, Math.abs(cropX) / scale, Math.abs(cropY) / scale, 150/scale, 150/scale, 0, 0, 150, 150);
-        return canvas.toDataURL('image/jpeg', 0.6); 
-    }
-    
     function salvarUsuario() {
         let n = document.getElementById('inputNome').value.trim(); 
         let rStr = document.getElementById('inputRenda').value;
@@ -996,24 +993,26 @@
                 if (img.complete && img.naturalWidth > 0) {
                     let scale = Math.max(150 / img.naturalWidth, 150 / img.naturalHeight);
                     ctx.drawImage(img, Math.abs(cropX) / scale, Math.abs(cropY) / scale, 150/scale, 150/scale, 0, 0, 150, 150);
+                    // Comprime bem a foto para enviar direto pra Nuvem
                     avatarFinalSelecionado = canvas.toDataURL('image/jpeg', 0.6);
                 } else {
-                    avatarFinalSelecionado = img.src; // Backup se o celular engasgar
+                    avatarFinalSelecionado = img.src; 
                 }
             } catch(e) {
                 console.log("Erro no crop", e);
-                avatarFinalSelecionado = document.getElementById('cropImg').src; // Backup de segurança
+                avatarFinalSelecionado = document.getElementById('cropImg').src; 
             }
         }
 
-        let img = avatarFinalSelecionado || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(n)}&backgroundColor=e2e8f0`;
+        // A foto compactada (ou o avatar) vai direto pro Firebase agora!
+        let imgParaNuvem = avatarFinalSelecionado || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(n)}&backgroundColor=e2e8f0`;
 
         if (editIndex === -1) { 
-            usuarios.push({ nome: n, renda: r, avatarUrl: img }); 
+            usuarios.push({ nome: n, renda: r, avatarUrl: imgParaNuvem }); 
             showToast(`${n} adicionado!`); 
         } else { 
             let nomeAntigo = usuarios[editIndex].nome;
-            usuarios[editIndex] = { nome: n, renda: r, avatarUrl: img }; 
+            usuarios[editIndex] = { nome: n, renda: r, avatarUrl: imgParaNuvem }; 
             
             if (nomeAntigo !== n) {
                 transacoes.forEach(tx => { if (tx.categoria === `Pessoal - ${nomeAntigo}`) { tx.categoria = `Pessoal - ${n}`; } });
@@ -1027,7 +1026,11 @@
         }
         avatarFinalSelecionado = null; 
         isFazendoCrop = false;
+        
+        // O Firebase vai ouvir essa mudança e atualizar a foto em todos os aparelhos
         localStorage.setItem('financas_premium_dados', JSON.stringify(usuarios));
+        salvarNaNuvemFirebase(); 
+        
         fecharModal(); 
         atualizarTela(); 
         atualizarCaixa();
@@ -1274,7 +1277,7 @@
         if (usuarios.length === 0) { uList.innerHTML += '<p style="color: var(--secondary-text); padding: 10px 0; font-size: 0.9rem;">Nenhum integrante cadastrado.</p>'; } 
         else {
             usuarios.forEach((u, i) => {
-                let foto = u.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.nome)}&backgroundColor=e2e8f0`;
+                let foto = getFoto(u);
                 let p = Math.round(u.renda > 0 ? (vLiq[i] / u.renda) * 100 : 0);
                 uList.innerHTML += `<div class="user-list-card" onclick="abrirModal(${i})"><img src="${foto}" class="animated-avatar"><div class="user-info"><div class="user-header"><span class="user-name">${u.nome}</span><span class="user-income">${vLiq[i].toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></div><div class="progress-track" title="Restam ${p}%"><div class="progress-fill" style="width: ${p}%; background-color: ${coresPremium[i % coresPremium.length]};"></div></div></div><span class="percent-label">${p}%</span></div>`;
             });
@@ -1298,7 +1301,7 @@
         document.getElementById('saudacaoHeader').innerHTML = `${saudacaoText}, <strong>${dono ? dono.nome : "Visitante"}</strong>!`;
         
         if (dono) {
-            let fotoDono = dono.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(dono.nome)}&backgroundColor=e2e8f0`;
+            let fotoDono = getFoto(dono);
             document.getElementById('avatarHeader').src = fotoDono;
         }
 
@@ -1510,14 +1513,17 @@
         const senhaDigitada = document.getElementById('loginSenha').value;
         const erroMsg = document.getElementById('erroLogin');
 
+        // Apaga a senha da tela IMEDIATAMENTE antes do Firebase agir
+        document.getElementById('loginSenha').value = ''; 
+
         firebase.auth().signInWithEmailAndPassword(emailDigitado, senhaDigitada)
         .then(() => {
-            sessionStorage.setItem('cofreAberto', 'true'); // 🔑 Avisa que destrancou!
+            // A MÁGICA: Em vez de esperar o Firebase fechar a tela, nós mesmos abrimos a porta à força!
+            liberarTelaBiometria(); 
         })
         .catch((error) => {
             erroMsg.style.display = 'block';
             erroMsg.innerText = "E-mail ou senha incorretos!";
-            document.getElementById('loginSenha').value = '';
         });
     }
 
