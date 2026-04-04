@@ -934,107 +934,173 @@
     let cropX = 0, cropY = 0, isDragging = false, startX, startY;
     
     function previewFoto(input) { 
-        if (input.files && input.files[0]) { 
-            const r = new FileReader(); 
-            r.onload = e => { 
-                isFazendoCrop = true;
-                document.getElementById('profilePreviewBox').style.display = 'none';
-                document.getElementById('txtAvatarGrade').style.display = 'none';
-                document.getElementById('boxAvatarGrade').style.display = 'none';
-                document.getElementById('cropArea').style.display = 'block';
-                document.getElementById('cropHintText').style.display = 'block';
-                
-                const img = document.getElementById('cropImg');
-                img.src = e.target.result;
-                img.onload = () => {
-                    let sz = 150; 
-                    let scale = Math.max(sz / img.naturalWidth, sz / img.naturalHeight);
-                    img.style.width = (img.naturalWidth * scale) + 'px';
-                    img.style.height = (img.naturalHeight * scale) + 'px';
-                    cropX = 0; cropY = 0;
-                    img.style.transform = `translate(0px, 0px)`;
-                    
-                    img.onmousedown = img.ontouchstart = (ev) => {
-                        isDragging = true;
-                        startX = (ev.touches ? ev.touches[0].clientX : ev.clientX) - cropX;
-                        startY = (ev.touches ? ev.touches[0].clientY : ev.clientY) - cropY;
-                    };
-                    document.onmousemove = document.ontouchmove = (ev) => {
-                        if(!isDragging) return;
-                        if (ev.touches) ev.preventDefault(); 
-                        
-                        cropX = (ev.touches ? ev.touches[0].clientX : ev.clientX) - startX;
-                        cropY = (ev.touches ? ev.touches[0].clientY : ev.clientY) - startY;
-                        
-                        let maxW = parseFloat(img.style.width) - sz;
-                        let maxH = parseFloat(img.style.height) - sz;
-                        cropX = Math.min(0, Math.max(cropX, -maxW));
-                        cropY = Math.min(0, Math.max(cropY, -maxH));
-                        img.style.transform = `translate(${cropX}px, ${cropY}px)`;
-                    };
-                    document.onmouseup = document.ontouchend = () => isDragging = false;
-                };
-            }; 
-            r.readAsDataURL(input.files[0]); 
-        } 
+    if (!input.files || !input.files[0]) return;
+
+    const arquivo = input.files[0];
+
+    // bloqueia arquivos absurdamente grandes
+    if (arquivo.size > 15 * 1024 * 1024) {
+        showToast("A foto é muito grande. Escolha uma imagem menor.");
+        input.value = "";
+        return;
     }
+
+    const r = new FileReader();
+
+    r.onload = e => { 
+        isFazendoCrop = true;
+
+        document.getElementById('profilePreviewBox').style.display = 'none';
+        document.getElementById('txtAvatarGrade').style.display = 'none';
+        document.getElementById('boxAvatarGrade').style.display = 'none';
+        document.getElementById('cropArea').style.display = 'block';
+        document.getElementById('cropHintText').style.display = 'block';
+        
+        const img = document.getElementById('cropImg');
+        img.src = e.target.result;
+
+        img.onload = () => {
+            let sz = 150;
+            let scale = Math.max(sz / img.naturalWidth, sz / img.naturalHeight);
+
+            img.style.width = (img.naturalWidth * scale) + 'px';
+            img.style.height = (img.naturalHeight * scale) + 'px';
+
+            cropX = 0;
+            cropY = 0;
+            img.style.transform = `translate(0px, 0px)`;
+
+            img.onmousedown = img.ontouchstart = (ev) => {
+                isDragging = true;
+                startX = (ev.touches ? ev.touches[0].clientX : ev.clientX) - cropX;
+                startY = (ev.touches ? ev.touches[0].clientY : ev.clientY) - cropY;
+            };
+
+            document.onmousemove = document.ontouchmove = (ev) => {
+                if (!isDragging) return;
+                if (ev.touches) ev.preventDefault();
+
+                cropX = (ev.touches ? ev.touches[0].clientX : ev.clientX) - startX;
+                cropY = (ev.touches ? ev.touches[0].clientY : ev.clientY) - startY;
+
+                let maxW = parseFloat(img.style.width) - sz;
+                let maxH = parseFloat(img.style.height) - sz;
+
+                cropX = Math.min(0, Math.max(cropX, -maxW));
+                cropY = Math.min(0, Math.max(cropY, -maxH));
+
+                img.style.transform = `translate(${cropX}px, ${cropY}px)`;
+            };
+
+            document.onmouseup = document.ontouchend = () => {
+                isDragging = false;
+            };
+        };
+
+        img.onerror = () => {
+            showToast("Erro ao carregar a foto.");
+            isFazendoCrop = false;
+        };
+    };
+
+    r.onerror = () => {
+        showToast("Não foi possível ler a imagem.");
+    };
+
+    r.readAsDataURL(arquivo);
+}
 
     function salvarUsuario() {
-        let n = document.getElementById('inputNome').value.trim(); 
-        let rStr = document.getElementById('inputRenda').value;
-        let r = rStr ? parseMoeda(rStr) : 0; 
+    let n = document.getElementById('inputNome').value.trim(); 
+    let rStr = document.getElementById('inputRenda').value;
+    let r = rStr ? parseMoeda(rStr) : 0; 
         
-        if (!n) { showToast("Preencha o nome!"); return; }
-        
-        if (isFazendoCrop) {
-            try {
-                let canvas = document.createElement('canvas'); canvas.width = 150; canvas.height = 150;
-                let ctx = canvas.getContext('2d'); let img = document.getElementById('cropImg');
-                if (img.complete && img.naturalWidth > 0) {
-                    let scale = Math.max(150 / img.naturalWidth, 150 / img.naturalHeight);
-                    ctx.drawImage(img, Math.abs(cropX) / scale, Math.abs(cropY) / scale, 150/scale, 150/scale, 0, 0, 150, 150);
-                    // Comprime bem a foto para enviar direto pra Nuvem
-                    avatarFinalSelecionado = canvas.toDataURL('image/jpeg', 0.6);
-                } else {
-                    avatarFinalSelecionado = img.src; 
-                }
-            } catch(e) {
-                console.log("Erro no crop", e);
-                avatarFinalSelecionado = document.getElementById('cropImg').src; 
-            }
-        }
-
-        // A foto compactada (ou o avatar) vai direto pro Firebase agora!
-        let imgParaNuvem = avatarFinalSelecionado || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(n)}&backgroundColor=e2e8f0`;
-
-        if (editIndex === -1) { 
-            usuarios.push({ nome: n, renda: r, avatarUrl: imgParaNuvem }); 
-            showToast(`${n} adicionado!`); 
-        } else { 
-            let nomeAntigo = usuarios[editIndex].nome;
-            usuarios[editIndex] = { nome: n, renda: r, avatarUrl: imgParaNuvem }; 
-            
-            if (nomeAntigo !== n) {
-                transacoes.forEach(tx => { if (tx.categoria === `Pessoal - ${nomeAntigo}`) { tx.categoria = `Pessoal - ${n}`; } });
-                localStorage.setItem('financas_premium_transacoes', JSON.stringify(transacoes));
-                if (sessionStorage.getItem('usuarioLogado') === nomeAntigo) {
-                    sessionStorage.setItem('usuarioLogado', n);
-                    localStorage.setItem('meuPerfilFixo_GuiaBolso', n);
-                }
-            }
-            showToast(`Perfil Atualizado!`); 
-        }
-        avatarFinalSelecionado = null; 
-        isFazendoCrop = false;
-        
-        // O Firebase vai ouvir essa mudança e atualizar a foto em todos os aparelhos
-        localStorage.setItem('financas_premium_dados', JSON.stringify(usuarios));
-        salvarNaNuvemFirebase(); 
-        
-        fecharModal(); 
-        atualizarTela(); 
-        atualizarCaixa();
+    if (!n) { 
+        showToast("Preencha o nome!"); 
+        return; 
     }
+
+    let imgParaNuvem = avatarFinalSelecionado || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(n)}&backgroundColor=e2e8f0`;
+
+    if (isFazendoCrop) {
+        try {
+            const img = document.getElementById('cropImg');
+
+            if (img.complete && img.naturalWidth > 0) {
+                const canvas = document.createElement('canvas');
+                const tamanhoFinal = 128; // menor = arquivo bem mais leve
+                canvas.width = tamanhoFinal;
+                canvas.height = tamanhoFinal;
+
+                const ctx = canvas.getContext('2d', { alpha: false });
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = "high";
+
+                let scale = Math.max(tamanhoFinal / img.naturalWidth, tamanhoFinal / img.naturalHeight);
+
+                ctx.drawImage(
+                    img,
+                    Math.abs(cropX) / scale,
+                    Math.abs(cropY) / scale,
+                    tamanhoFinal / scale,
+                    tamanhoFinal / scale,
+                    0,
+                    0,
+                    tamanhoFinal,
+                    tamanhoFinal
+                );
+
+                // compressão forte para não travar nem estourar no Firebase
+                imgParaNuvem = canvas.toDataURL('image/jpeg', 0.45);
+
+                // segurança extra: evita salvar base64 muito grande
+                if (imgParaNuvem.length > 180000) {
+                    imgParaNuvem = canvas.toDataURL('image/jpeg', 0.30);
+                }
+            }
+        } catch (e) {
+            console.log("Erro no crop:", e);
+            showToast("Erro ao processar a foto.");
+            return;
+        }
+    }
+
+    if (editIndex === -1) { 
+        usuarios.push({ nome: n, renda: r, avatarUrl: imgParaNuvem }); 
+        showToast(`${n} adicionado!`); 
+    } else { 
+        let nomeAntigo = usuarios[editIndex].nome;
+
+        usuarios[editIndex] = { nome: n, renda: r, avatarUrl: imgParaNuvem }; 
+            
+        if (nomeAntigo !== n) {
+            transacoes.forEach(tx => {
+                if (tx.categoria === `Pessoal - ${nomeAntigo}`) {
+                    tx.categoria = `Pessoal - ${n}`;
+                }
+            });
+
+            localStorage.setItem('financas_premium_transacoes', JSON.stringify(transacoes));
+
+            if (sessionStorage.getItem('usuarioLogado') === nomeAntigo) {
+                sessionStorage.setItem('usuarioLogado', n);
+                localStorage.setItem('meuPerfilFixo_GuiaBolso', n);
+            }
+        }
+
+        showToast(`Perfil Atualizado!`); 
+    }
+
+    avatarFinalSelecionado = null; 
+    isFazendoCrop = false;
+
+    localStorage.setItem('financas_premium_dados', JSON.stringify(usuarios));
+    salvarNaNuvemFirebase(); 
+        
+    fecharModal(); 
+    atualizarTela(); 
+    atualizarCaixa();
+}
     
     function solicitarExclusaoUser() { document.getElementById('textoConfExclusao').innerHTML = `Excluir <strong>${usuarios[editIndex].nome}</strong>?`; document.getElementById('boxBotoesConf').innerHTML = `<div style="display:flex;gap:10px;"><button class="btn-conf btn-no" style="flex:1;" onclick="cancelarExclusao()">Cancelar</button><button class="btn-conf btn-yes" style="flex:1;" onclick="confirmarExclusaoUser()">Sim, excluir</button></div>`; document.getElementById('confModal').classList.add('active'); }
     function confirmarExclusaoUser() { usuarios.splice(editIndex, 1); localStorage.setItem('financas_premium_dados', JSON.stringify(usuarios)); cancelarExclusao(); fecharModal(); atualizarTela(); atualizarCaixa(); showToast(`Excluído.`); }
