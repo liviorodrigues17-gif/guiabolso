@@ -987,21 +987,6 @@
         }
     }
 
-    // O App fica "escutando" as ordens do sw.js quando você clica na notificação
-    navigator.serviceWorker.addEventListener('message', event => {
-        if (event.data && event.data.action === 'abrirTransacao') {
-            // 1. Muda para a aba de Lançamentos
-            let btnCaixa = document.querySelector(`[onclick="trocarAba('aba-caixa', this)"]`);
-            if (btnCaixa) trocarAba('aba-caixa', btnCaixa);
-            
-            // 2. Procura a transação pelo carimbo de tempo e abre o modal dela
-            setTimeout(() => {
-                let idxReal = transacoes.findIndex(t => t.timestamp === event.data.timestamp);
-                if (idxReal !== -1) abrirModalTransacao(idxReal);
-            }, 600); // 0.6 segundos de delay para dar tempo da tela girar
-        }
-    });
-    
     function verificarVencimentos() {
         let hoje = new Date(); hoje.setHours(0,0,0,0);
         let d2 = new Date(hoje); d2.setDate(hoje.getDate() + 2);
