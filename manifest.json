@@ -1,23 +1,35 @@
 {
-  "name": "Guia Bolso Casal",
-  "short_name": "Guia Bolso",
-  "start_url": "index.html",
-  "scope": ".",
+  "name": "Guia Bolso",
+  "short_name": "GuiaBolso",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#22c55e",
+  "background_color": "#5c2092",
+  "theme_color": "#5c2092",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "https://liviorodrigues17-gif.github.io/guiabolso/icon-192.png?v=3",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "https://liviorodrigues17-gif.github.io/guiabolso/icon-192.png?v=3",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "https://liviorodrigues17-gif.github.io/guiabolso/icon-512.png?v=3",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "https://liviorodrigues17-gif.github.io/guiabolso/icon-512.png?v=3",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
