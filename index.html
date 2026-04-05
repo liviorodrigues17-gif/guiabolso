@@ -262,6 +262,15 @@
     stroke: currentColor;
     transition: 0.3s ease;
 }
+
+/* BLOQUEIA O MENU DE COMPARTILHAR IMAGEM NO CELULAR */
+    img, .avatar-header, .animated-avatar, .netflix-profile img, .profile-circle img, .avatar-option {
+        -webkit-touch-callout: none !important;
+        -webkit-user-drag: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+        pointer-events: auto;
+    }
         
     </style> 
       
@@ -477,7 +486,7 @@
                                 <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text);">Consumo Mensal</h3>
                                 <div style="display: flex; gap: 8px;">
                                     <button class="btn-add-small" onclick="abrirModalSimulador()" style="padding: 8px 12px; font-size: 0.85rem; background: transparent; color: var(--primary); border: 1px solid var(--primary); box-shadow: none;"> <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; margin-top: -2px;"> <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path> </svg> Simular </button>
-                                    <button class="btn-add-small btn-mic" id="btnVoz" onclick="iniciarReconhecimentoVoz()" style="padding: 8px 12px; font-size: 0.85rem; box-shadow: none;"> <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; margin-top: -2px;"> <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line> </svg> Voz </button>>
+                                    <button class="btn-add-small btn-mic" id="btnVoz" onclick="iniciarReconhecimentoVoz()" style="padding: 8px 12px; font-size: 0.85rem; box-shadow: none;"> <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; margin-top: -2px;"> <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line> </svg> Voz </button>
                                     <button class="btn-add-small" onclick="abrirModalTransacao()" style="padding: 8px 12px; font-size: 0.85rem;">+ Lançar</button>
                                 </div>
                             </div>
@@ -966,22 +975,21 @@
         if ("Notification" in window && Notification.permission === "granted") {
             navigator.serviceWorker.ready.then(function(registration) {
                 
-                // Sua logo oficial do GitHub
-                const linkIconeGuiaBolso = "https://liviorodrigues17-gif.github.io/guiabolso/icon-192.png"; 
+                // O '?v=100' engana o celular e OBRIGA ele a baixar a logo nova do GitHub, ignorando o emoji velho
+                const linkIconeGuiaBolso = "https://liviorodrigues17-gif.github.io/guiabolso/icon-192.png?v=100"; 
                 
                 registration.showNotification(titulo, {
                     body: mensagem,
                     icon: linkIconeGuiaBolso, 
-                    badge: linkIconeGuiaBolso, // Ícone pequeno que aparece na barra de status
+                    // Removi o 'badge' daqui porque o Android bloqueia imagens coloridas nessa função
                     vibrate: [200, 100, 200, 100, 200], 
                     requireInteraction: true,
                     data: dadosExtras 
                 });
             }).catch(function() {
-                // Fallback para navegadores que não suportam Service Worker (PC)
                 new Notification(titulo, { 
                     body: mensagem, 
-                    icon: "https://liviorodrigues17-gif.github.io/guiabolso/icon-192.png" 
+                    icon: "https://liviorodrigues17-gif.github.io/guiabolso/icon-192.png?v=100" 
                 });
             });
         }
@@ -2017,6 +2025,33 @@ function processarComandoVoz(frase) {
         setTimeout(() => campoCat.focus(), 500);
     }
 }
+
+// --- ESCUTA O CLIQUE DA NOTIFICAÇÃO PARA ABRIR O APP ---
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', event => {
+            let acaoOrdem = event.data.action || event.data.acao;
+            
+            if (acaoOrdem) {
+                // 1. Tira a tela preta de login da frente (se o app estava em segundo plano)
+                let loginOverlay = document.getElementById('loginOverlay');
+                if(loginOverlay && sessaoAtiva) loginOverlay.style.display = 'none';
+
+                // 2. Navega para a aba de Lançamentos
+                if (acaoOrdem === 'abrirAbaCaixa' || acaoOrdem === 'abrirTransacao') {
+                    let btnCaixa = document.querySelector(`[onclick="trocarAba('aba-caixa', this)"]`);
+                    if (btnCaixa) trocarAba('aba-caixa', btnCaixa);
+                }
+
+                // 3. Abre o modal exato da transação!
+                if (acaoOrdem === 'abrirTransacao' && event.data.timestamp) {
+                    setTimeout(() => {
+                        let idxReal = transacoes.findIndex(t => t.timestamp === event.data.timestamp);
+                        if (idxReal !== -1) abrirModalTransacao(idxReal);
+                    }, 500); // Meio segundo pra dar tempo da tela mudar
+                }
+            }
+        });
+    }
 </script>
 
 <button id="btnInstalar" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); padding:12px 24px; background:#22c55e; color:#fff; border:none; border-radius:12px; z-index:9999; font-weight:600; font-size: 1rem; box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4); cursor: pointer; align-items: center; gap: 8px;">
