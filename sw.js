@@ -48,3 +48,35 @@ self.addEventListener("fetch", (event) => {
   }
   event.respondWith(caches.match(event.request).then((response) => response || fetch(event.request)));
 });
+
+// Este código "escuta" o clique na notificação
+self.addEventListener('notificationclick', function(event) {
+    event.notification.close(); // Fecha a notificação da tela
+    
+    // Pega os dados secretos que enviamos junto com a notificação
+    let acao = event.notification.data ? event.notification.data.action : null;
+    let timestamp = event.notification.data ? event.notification.data.timestamp : null;
+
+    event.waitUntil(
+        clients.matchAll({ type: 'window' }).then(windowClients => {
+            // Se o app já estiver aberto no fundo, traz ele pra frente
+            for (var i = 0; i < windowClients.length; i++) {
+                var client = windowClients[i];
+                if (client.url && 'focus' in client) {
+                    client.focus();
+                    if (acao) client.postMessage({ action: acao, timestamp: timestamp });
+                    return;
+                }
+            }
+            // Se o app estiver fechado, abre ele
+            if (clients.openWindow) {
+                return clients.openWindow('/').then(windowClient => {
+                    // Dá um pequeno atraso para o app carregar antes de mandar a ordem
+                    setTimeout(() => {
+                        if (acao) windowClient.postMessage({ action: acao, timestamp: timestamp });
+                    }, 1500);
+                });
+            }
+        })
+    );
+});
