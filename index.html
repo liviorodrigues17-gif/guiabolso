@@ -271,14 +271,15 @@
         user-select: none !important;
         pointer-events: auto;
     }
+    
         
     </style> 
       
     </head>
 
     <body>
+      
       <div id="toast-container"></div>
-  
     <div id="loginOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: sans-serif;">
         <div style="background: #1e293b; padding: 2rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); width: 90%; max-width: 400px;">
             <h2 style="margin-bottom: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px;"> <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect> <path d="M7 11V7a5 5 0 0 1 10 0v4"></path> </svg> Guia Bolso </h2>
@@ -297,7 +298,28 @@
             <p id="erroLogin" style="color: #ef4444; margin-top: 1rem; font-size: 14px; display: none;">E-mail ou senha incorretos!</p>
         </div>
     </div>
-    
+    <div id="lockScreenOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: sans-serif;">
+        
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <svg viewBox="0 0 24 24" width="80" height="80" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 20px;">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <h1 style="font-size: 2.2rem; font-weight: 700; letter-spacing: 1px; margin: 0;">GuiaBolso</h1>
+        </div>
+
+        <div style="padding-bottom: 60px; width: 100%; display: flex; justify-content: center;">
+            <button onclick="usarBiometria(false)" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 16px 40px; border-radius: 30px; font-size: 1.1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; backdrop-filter: blur(10px); transition: 0.2s;">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a10 10 0 0 0-6.88 2.77M3 9.38a10 10 0 0 1 18 0M3 15a10 10 0 0 1 18 0M7 20a10 10 0 0 0 10 0M12 12v.01"></path>
+                    <path d="M12 16v.01"></path>
+                </svg>
+                Desbloquear
+            </button>
+        </div>
+    </div>
+
+
     <div id="setupInicialOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 9100; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; animation: fadeIn 0.5s;">
         <div style="background: #1e293b; padding: 2.5rem; border-radius: 20px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);">
             <div style="margin-bottom: 15px; display: flex; justify-content: center;"> <svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <circle cx="12" cy="12" r="10"></circle> <path d="M8 14s1.5 2 4 2 4-2 4-2"></path> <line x1="9" y1="9" x2="9.01" y2="9"></line> <line x1="15" y1="9" x2="15.01" y2="9"></line> </svg> </div>
@@ -338,6 +360,14 @@
     </div>
     
     <div class="app-container" id="appMainContainer" style="display: none;">
+
+    <script>
+        if (sessionStorage.getItem('cofreAberto') === 'true') {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('appMainContainer').style.display = 'block';
+        }
+    </script>
+      
 
         <nav class="bottom-nav">
             <div class="nav-group">
@@ -512,16 +542,76 @@
             </div>
 
             <div id="aba-divisao" class="tab-content">
-                <div class="balance-card" style="padding: 20px; text-align: left; display: flex; align-items: center; justify-content: space-between;">
-                    <div>
-                        <p style="color: var(--secondary-text); font-size: 0.95rem; font-weight: 600; margin-bottom: 5px;">Despesas da Casa (Total)</p>
-                        <h2 id="totalCasaAcerto" style="font-size: 2.2rem; color: var(--red);">R$ 0,00</h2>
-                    </div>
-                    <div style="opacity: 0.1;"><svg viewBox="0 0 24 24" width="55" height="55" fill="none" stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div>
-                </div>
-                <p style="color: var(--secondary-text); font-size: 0.95rem; margin-bottom: 20px;">Escolha o cenário que melhor se adapta à realidade de vocês neste mês:</p>
-                <div id="divisaoContainer"></div>
+    <style>
+        /* Fundo para não dar o erro do card vazando embaixo */
+        .sticky-header-divisao {
+            position: -webkit-sticky;
+            position: sticky;
+            top: -1px; 
+            z-index: 100;
+            background: var(--bg); 
+            padding: 15px 0; 
+            margin: -15px 0 5px 0;
+        }
+        
+        .divisao-card-master { 
+            padding: 20px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            border: 1px solid var(--border-hover); 
+            border-radius: 20px; 
+            background: var(--card); 
+        }
+
+        /* Estilo exato das setas que você desenhou */
+        .nav-arrow-svg { 
+            width: 25px; 
+            height: 40px; 
+            stroke: var(--secondary-text); 
+            stroke-width: 1.5; 
+            fill: none; 
+            cursor: pointer; 
+            transition: 0.2s; 
+        }
+        .nav-arrow-svg:hover { stroke: var(--text); }
+        .nav-arrow-svg:active { transform: scale(0.9); }
+    </style>
+    
+    <div class="sticky-header-divisao">
+        <div class="balance-card divisao-card-master" id="resumoDivisaoCard">
+            
+            <div style="min-width: 150px;">
+                <p id="mesAcertoTitulo" style="color: var(--primary); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 2px;">CARREGANDO...</p>
+                <p style="color: var(--secondary-text); font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; margin-top: 4px;">Despesas da Casa</p>
+                <h2 id="totalCasaAcerto" style="font-size: 2.2rem; color: var(--red);">R$ 0,00</h2>
             </div>
+            
+            <div style="flex: 1; display: flex; justify-content: space-between; align-items: center; padding: 0 15px;">
+                <svg class="nav-arrow-svg" viewBox="0 0 24 24" onclick="mudarMes(-1)">
+                    <polyline points="15 20 7 12 15 4"></polyline>
+                </svg>
+                
+                <svg class="nav-arrow-svg" viewBox="0 0 24 24" onclick="mudarMes(1)">
+                    <polyline points="9 20 17 12 9 4"></polyline>
+                </svg>
+            </div>
+            
+            <div style="opacity: 0.1;" id="iconeUsuariosDivisao">
+                <svg viewBox="0 0 24 24" width="55" height="55" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+            </div>
+            
+        </div>
+    </div>
+    
+    <p style="color: var(--secondary-text); font-size: 0.95rem; margin: 10px 0 20px 0;">Escolha o cenário de divisão para este mês:</p>
+    <div id="divisaoContainer"></div>
+</div>
 
             <div id="aba-projetos" class="tab-content">
                 <div class="balance-card" style="padding: 20px; text-align: left; display: flex; align-items: center; justify-content: space-between;">
@@ -645,6 +735,65 @@
             </div>
         </div>
     </div>
+    
+    <div class="modal-overlay" id="modalDetalhesDivisao">
+        <style>
+            #listaContasDivisao::-webkit-scrollbar { display: none; }
+            #listaContasDivisao { -ms-overflow-style: none; scrollbar-width: none; }
+        </style>
+        <div class="modal-content" style="max-width: 400px; padding: 0; overflow: hidden; border-radius: 24px;">
+            <div style="background: linear-gradient(135deg, var(--primary), var(--primary-dark)); padding: 30px 20px 20px; text-align: center; color: white; position: relative;">
+                <button onclick="fecharDetalhesDivisao()" style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;">×</button>
+                <h3 id="tituloModalDivisao" style="margin-bottom: 5px; font-size: 1.2rem; font-weight: 600;">Divisão Detalhada</h3>
+                <p style="font-size: 0.85rem; opacity: 0.8; margin: 0;">Veja quanto cada um paga por conta</p>
+            </div>
+            
+            <div style="padding: 20px 20px 40px 20px; max-height: 60vh; overflow-y: auto; background: var(--bg);" id="listaContasDivisao">
+            </div>
+            
+            <div style="padding: 15px 20px; border-top: 1px solid var(--border-hover); background: var(--card);">
+                <button class="btn-save" style="width: 100%; background: var(--input-bg); color: var(--text); box-shadow: none;" onclick="fecharDetalhesDivisao()">Fechar Detalhes</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="modalDetalhesConta">
+        <div class="modal-content" style="max-width: 350px; padding: 0; overflow: hidden; border-radius: 24px;">
+            <div style="background: linear-gradient(135deg, var(--red), #b91c1c); padding: 35px 20px 25px; text-align: center; color: white; position: relative;">
+                <button onclick="fecharDetalhesConta()" style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;">×</button>
+                <div id="detalheIcone" style="font-size: 2.5rem; margin-bottom: 12px; background: rgba(255,255,255,0.2); width: 65px; height: 65px; display: inline-flex; align-items: center; justify-content: center; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"></div>
+                <h3 id="detalheTitulo" style="margin-bottom: 5px; font-size: 1.1rem; font-weight: 600; opacity: 0.9;">Nome da Conta</h3>
+                <h2 id="detalheValor" style="font-size: 2.4rem; font-weight: 700; margin: 0; letter-spacing: -1px;">R$ 0,00</h2>
+            </div>
+            
+            <div style="padding: 25px 25px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px dashed var(--border-hover); padding-bottom: 12px;">
+                    <span style="color: var(--secondary-text); font-size: 0.9rem;">Vencimento</span>
+                    <strong id="detalheData" style="color: var(--text); font-size: 0.95rem;">00/00/0000</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px dashed var(--border-hover); padding-bottom: 12px;">
+                    <span style="color: var(--secondary-text); font-size: 0.9rem;">Categoria</span>
+                    <strong id="detalheCategoria" style="color: var(--text); font-size: 0.95rem;">Casa</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 25px; border-bottom: 1px dashed var(--border-hover); padding-bottom: 12px;">
+                    <span style="color: var(--secondary-text); font-size: 0.9rem;">Lançamento</span>
+                    <strong id="detalheRepeticao" style="color: var(--text); font-size: 0.95rem;">Única</strong>
+                </div>
+                
+                <button id="btnDarBaixa" class="btn-save" style="width: 100%; background: var(--green); margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1.05rem;" onclick="darBaixaConta()">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    PAGO
+                </button>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-save" style="flex: 1; background: var(--input-bg); color: var(--text); box-shadow: none;" onclick="fecharDetalhesConta()">Voltar</button>
+                    <button class="btn-save" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="editarContaPeloDetalhe()">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        Editar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="conf-overlay" id="confModal">
         <div class="conf-modal">
@@ -654,6 +803,49 @@
         </div>
     </div>
     
+    <div class="modal-overlay" id="modalHistoricoProjeto" style="z-index: 9600;">
+      <style>
+        #listaHistoricoProjeto::-webkit-scrollbar { display: none; }
+        #listaHistoricoProjeto { 
+            -ms-overflow-style: none; 
+            scrollbar-width: none; 
+            overflow-y: auto !important; 
+            -webkit-overflow-scrolling: touch !important; 
+            touch-action: pan-y !important;
+        }
+    </style>
+        <div class="modal-content" style="max-width: 400px; padding: 0; overflow: hidden; border-radius: 24px;">
+            <div style="background: linear-gradient(135deg, var(--primary), var(--primary-dark)); padding: 30px 20px 20px; text-align: center; color: white; position: relative;">
+                <button onclick="fecharHistoricoProjeto()" style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;">×</button>
+                <div id="histProjIcone" style="font-size: 2.5rem; margin-bottom: 10px;">🎯</div>
+                <h3 id="histProjTitulo" style="margin-bottom: 5px; font-size: 1.2rem; font-weight: 600;">Nome do Projeto</h3>
+                <p style="font-size: 0.85rem; opacity: 0.8; margin: 0;">Trilha de Auditoria</p>
+            </div>
+            <div style="padding: 20px; max-height: 55vh; overflow-y: auto; background: var(--bg);" id="listaHistoricoProjeto">
+                </div>
+            <div style="padding: 15px 20px; border-top: 1px solid var(--border-hover); background: var(--card);">
+                <button class="btn-save" style="width: 100%; background: var(--input-bg); color: var(--text); box-shadow: none;" onclick="fecharHistoricoProjeto()">Fechar Histórico</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalEditarDepProj" style="z-index: 9700;">
+        <div class="modal-content" style="max-width: 320px;">
+            <div class="modal-header">
+                <h3 style="font-size: 1.1rem;">Editar Contribuição</h3>
+                <button class="close-btn" onclick="fecharEditarDepProj()">×</button>
+            </div>
+            <p id="dataEdicaoDep" style="font-size: 0.85rem; color: var(--secondary-text); margin-bottom: 15px;">Data Original: --/--/----</p>
+            <div class="form-group">
+                <input type="text" id="inputEditaDepProj" class="form-control" style="font-size: 1.2rem; font-weight: bold; color: var(--green);">
+            </div>
+            <input type="hidden" id="hiddenTimestampDep">
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn-save" style="flex: 1; background: var(--input-bg); color: var(--text); box-shadow: none;" onclick="fecharEditarDepProj()">Cancelar</button>
+                <button class="btn-save" style="flex: 1; background: var(--green);" onclick="salvarEdicaoDepProj()">Salvar</button>
+            </div>
+        </div>
+    </div>
 
 <script>
   // ==========================================
@@ -781,17 +973,21 @@
         };
 
         document.addEventListener("visibilitychange", () => {
-            if (document.visibilityState === "visible") {
+            let temBiometria = localStorage.getItem('biometriaAppId');
+            
+            if (document.visibilityState === "hidden") {
+                // 1. O app foi MINIMIZADO. Sobe a tela roxa de bloqueio imediatamente!
+                if (sessaoAtiva && temBiometria) {
+                    document.getElementById('lockScreenOverlay').style.display = 'flex';
+                }
+            } 
+            else if (document.visibilityState === "visible") {
+                // 2. O app foi ABERTO DE NOVO. Reconecta a internet.
                 db.disableNetwork().then(() => db.enableNetwork());
                 
-                let temBiometria = localStorage.getItem('biometriaAppId');
-                let donoDoCelular = localStorage.getItem('meuPerfilFixo_GuiaBolso');
-                
-                if (sessaoAtiva && temBiometria && donoDoCelular) {
-                    document.getElementById('appMainContainer').style.display = 'none';
-                    document.getElementById('netflixOverlay').style.display = 'flex';
-                    sessionStorage.removeItem('cofreAberto'); 
-                    setTimeout(() => { usarBiometria(); }, 400);
+                // 3. Se a tela roxa estiver lá, puxa a biometria automaticamente!
+                if (document.getElementById('lockScreenOverlay').style.display === 'flex') {
+                    setTimeout(() => { usarBiometria(false); }, 400);
                 }
             }
         });
@@ -996,17 +1192,34 @@
     }
 
     function verificarVencimentos() {
-        let hoje = new Date(); hoje.setHours(0,0,0,0);
-        let d2 = new Date(hoje); d2.setDate(hoje.getDate() + 2);
+        let hoje = new Date(); 
+        hoje.setHours(0,0,0,0);
+        
+        // 1. Cria uma memória para o celular saber se já te mandou notificação hoje
+        let dataUltimoAviso = localStorage.getItem('guiabolso_ultimo_aviso');
+        let dataHojeStr = hoje.toISOString().split('T')[0];
+        
+        // Se a data do último aviso for igual a de hoje, ele aborta e fica em silêncio!
+        if (dataUltimoAviso === dataHojeStr) return; 
+
+        let d2 = new Date(hoje); 
+        d2.setDate(hoje.getDate() + 2);
+        
         let vencendo = transacoes.filter(tx => {
             if(tx.tipo !== 'despesa') return false;
+            if(tx.pago === true) return false; // 2. IGNORA COMPLETAMENTE SE JÁ ESTIVER PAGA!
+            
             let [a, m, d] = tx.data.split('-').map(Number);
             let dtTx = new Date(a, m - 1, d);
             return dtTx >= hoje && dtTx <= d2;
         });
+        
         if (vencendo.length > 0) { 
-            let msgVenc = `⚠️ Alerta de Vencimento\n💡 Contas próximas a vencer: ${vencendo.length}\n⏳ Prazo limite: 2 dias\n📅 Data: ${hoje.toLocaleDateString('pt-BR')}`;
+            let msgVenc = `⚠️ Alerta de Vencimento\n💡 Contas próximas a vencer: ${vencendo.length}\n⏳ Prazo limite: 2 dias`;
             dispararNotificacao("GuiaBolso", msgVenc, { acao: 'abrirAbaCaixa' }); 
+            
+            // 3. Grava no celular que o aviso de hoje já foi dado
+            localStorage.setItem('guiabolso_ultimo_aviso', dataHojeStr);
         }
     }
 
@@ -1048,8 +1261,7 @@ function carregarTema() {
     }
 
     function showToast(msg) { const c = document.getElementById('toast-container'); c.innerHTML = ''; const t = document.createElement('div'); t.className = 'toast'; t.innerHTML = msg; c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 3000); }
-
-    function mudarMes(direcao) { dataFiltroAtual.setMonth(dataFiltroAtual.getMonth() + direcao); atualizarCaixa(); atualizarTela(); }
+    function mudarMes(direcao) { dataFiltroAtual.setMonth(dataFiltroAtual.getMonth() + direcao); atualizarCaixa(); atualizarTela(); if(typeof renderizarAbaDivisao === "function") renderizarAbaDivisao(); }
     function formatarMesAno(d) { const m = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']; return `${m[d.getMonth()]} ${d.getFullYear()}`; }
 
     // ==========================================
@@ -1428,8 +1640,36 @@ function carregarTema() {
 
     function solicitarExclusaoTx(idx) {
         editTxIndex = idx; let tx = transacoes[idx]; let grp = transacoes.filter(t => t.groupId && t.groupId === tx.groupId); let box = document.getElementById('boxBotoesConf');
-        if (grp.length > 1) { document.getElementById('textoConfExclusao').innerHTML = `A transação <strong>${tx.descricao}</strong> é uma cobrança repetida.`; box.innerHTML = `<button class="btn-conf" style="background: var(--input-bg); color: var(--text);" onclick="confirmarExclusaoTx('unica')">🗑️ Só este mês</button><button class="btn-conf" style="background: #fca5a5; color: white;" onclick="confirmarExclusaoTx('futuras')">🛑 Esta e as futuras</button><button class="btn-conf btn-yes" onclick="confirmarExclusaoTx('todas')">⚠️ Apagar TODAS</button><button class="btn-conf btn-no" onclick="cancelarExclusao()">Cancelar</button>`; } 
-        else { document.getElementById('textoConfExclusao').innerHTML = `Excluir <strong>${tx.descricao}</strong>?`; box.innerHTML = `<div style="display:flex;gap:10px;"><button class="btn-conf btn-no" style="flex:1;" onclick="cancelarExclusao()">Cancelar</button><button class="btn-conf btn-yes" style="flex:1;" onclick="confirmarExclusaoTx('unica')">Sim</button></div>`; }
+        
+        if (grp.length > 1) { 
+            document.getElementById('textoConfExclusao').innerHTML = `A transação <strong>${tx.descricao}</strong> é uma cobrança repetida.`; 
+            box.innerHTML = `
+                <button class="btn-conf" style="background: var(--input-bg); color: var(--text); display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="confirmarExclusaoTx('unica')">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    Só este mês
+                </button>
+                <button class="btn-conf" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="confirmarExclusaoTx('futuras')">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>
+                    Esta e as futuras
+                </button>
+                <button class="btn-conf btn-yes" style="display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="confirmarExclusaoTx('todas')">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    Apagar TODAS
+                </button>
+                <button class="btn-conf btn-no" onclick="cancelarExclusao()">Cancelar</button>
+            `; 
+        } else { 
+            document.getElementById('textoConfExclusao').innerHTML = `Excluir <strong>${tx.descricao}</strong>?`; 
+            box.innerHTML = `
+                <div style="display:flex;gap:10px;">
+                    <button class="btn-conf btn-no" style="flex:1;" onclick="cancelarExclusao()">Cancelar</button>
+                    <button class="btn-conf btn-yes" style="flex:1; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="confirmarExclusaoTx('unica')">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        Sim, Excluir
+                    </button>
+                </div>
+            `; 
+        }
         document.getElementById('confModal').classList.add('active');
     }
 
@@ -1505,7 +1745,57 @@ function carregarTema() {
         txs.forEach((tx) => {
             let iReal = transacoes.indexOf(tx); let dFmt = tx.data.split('-').reverse().join('/'); let isRec = tx.tipo === 'receita';
             let htmlD = ""; if (dFmt !== dAnt) { htmlD = `<span class="timeline-date-label">${dFmt}</span>`; dAnt = dFmt; }
-            lista.innerHTML += `<div class="timeline-item"><div class="timeline-dot" style="background: ${isRec ? 'var(--green)' : 'var(--primary)'};"></div>${htmlD}<div class="transaction-card" style="margin-bottom: 0;"><div class="tx-left"><div class="tx-icon">${isRec ? svgReceita : (tx.categoria.startsWith('Casa') ? svgCasa : svgPessoal)}</div><div class="tx-info-box"><span class="tx-title">${tx.descricao} <small style="opacity:0.5; font-size:0.7rem; font-weight:normal;">(${tx.hora || '--:--'})</small></span><div class="tx-meta"><span class="tx-badge ${tx.categoria.startsWith('Casa') ? 'casa' : 'pessoal'}">${tx.categoria.replace('Casa - ', '').replace('Pessoal - ', '')}</span></div></div></div><div class="tx-right"><span class="tx-value ${isRec ? 'receita' : 'despesa'}">${isRec ? '+' : '-'} ${tx.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span><div class="tx-actions"><button class="btn-action-tx edit" onclick="abrirModalTransacao(${iReal})" title="Editar">✏️</button><button class="btn-action-tx delete" onclick="solicitarExclusaoTx(${iReal})" title="Excluir">🗑️</button></div></div></div></div>`;
+            lista.innerHTML += `<div class="timeline-item"><div class="timeline-dot" style="background: ${isRec ? 'var(--green)' : 'var(--primary)'};"></div>${htmlD}<div class="transaction-card" style="margin-bottom: 0;"><div class="tx-left"><div class="tx-icon">${isRec ? svgReceita : (tx.categoria.startsWith('Casa') ? svgCasa : svgPessoal)}</div><div class="tx-info-box"><span class="tx-title">${tx.descricao} <small style="opacity:0.5; font-size:0.7rem; font-weight:normal;">(${tx.hora || '--:--'})</small></span><div class="tx-meta"><span class="tx-badge ${tx.categoria.startsWith('Casa') ? 'casa' : 'pessoal'}">${tx.categoria.replace('Casa - ', '').replace('Pessoal - ', '')}</span></div></div></div><div class="tx-right"><span class="tx-value ${isRec ? 'receita' : 'despesa'}">${isRec ? '+' : '-'} ${tx.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span><div class="tx-actions"><button class="btn-action-tx edit" onclick="abrirModalTransacao(${iReal})" title="Editar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button><button class="btn-action-tx delete" onclick="solicitarExclusaoTx(${iReal})" title="Excluir"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button></div></div></div></div>`;
+        });
+    }
+    
+    function renderizarVencimentos() {
+        const container = document.getElementById('vencimentosContainer');
+        if (!container) return;
+
+        let hoje = new Date(); 
+        hoje.setHours(0,0,0,0);
+        
+        let daquiA7Dias = new Date(hoje); 
+        daquiA7Dias.setDate(hoje.getDate() + 7);
+
+        // Puxa as despesas que caem entre hoje e os próximos 7 dias
+        let vencendo = transacoes.filter(tx => {
+            if (tx.tipo !== 'despesa') return false;
+            let [a, m, d] = tx.data.split('-').map(Number);
+            let dtTx = new Date(a, m - 1, d);
+            return dtTx >= hoje && dtTx <= daquiA7Dias;
+        });
+
+        // Ordena da conta que vence mais rápido para a mais demorada
+        vencendo.sort((a, b) => new Date(a.data) - new Date(b.data));
+
+        container.innerHTML = '';
+
+        if (vencendo.length === 0) {
+            container.innerHTML = '<p style="color: var(--secondary-text); font-size: 0.9rem; margin-top: 5px;">Nenhuma conta para os próximos 7 dias.</p>';
+            return;
+        }
+
+        vencendo.forEach(tx => {
+            let iReal = transacoes.indexOf(tx); // Acha a posição real da conta na memória
+            let [a, m, d] = tx.data.split('-').map(Number);
+            let dtTx = new Date(a, m - 1, d);
+            let diffTime = dtTx - hoje;
+            let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            
+            let textoDias = diffDays === 0 ? "Vence hoje!" : (diffDays === 1 ? "Vence amanhã" : `Vence em ${diffDays} dias`);
+            let corAlerta = diffDays <= 2 ? "var(--red)" : "#f59e0b";
+
+            // Adicionei o onclick e um hover pra ficar com cara de botão
+            container.innerHTML += `
+            <div onclick="abrirDetalhesConta(${iReal})" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 10px; border-bottom: 1px solid var(--border-hover); cursor: pointer; border-radius: 8px; transition: 0.2s;" onmouseover="this.style.background='var(--input-bg)'" onmouseout="this.style.background='transparent'">
+                <div style="display: flex; flex-direction: column; overflow: hidden; padding-right: 10px;">
+                    <span style="font-size: 0.95rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${tx.descricao}</span>
+                    <span style="font-size: 0.75rem; font-weight: 600; color: ${corAlerta};">${textoDias}</span>
+                </div>
+                <span style="font-weight: 700; font-size: 0.95rem; color: var(--red);">- ${tx.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+            </div>`;
         });
     }
 
@@ -1554,7 +1844,7 @@ function carregarTema() {
             });
         }
         
-        atualizarDashboardPremium(); renderizarAbaDivisao(); renderizarProjetos();
+        atualizarDashboardPremium(); renderizarAbaDivisao(); renderizarProjetos(); renderizarVencimentos();
     }
 
     function atualizarDashboardPremium() {
@@ -1618,14 +1908,25 @@ function carregarTema() {
     // 🛠️ ABA DE DIVISÃO (ACERTO DE CASAL)
     // ==========================================
     function renderizarAbaDivisao() {
-        const container = document.getElementById('divisaoContainer'); if (!container) return;
-        if (usuarios.length < 2) { container.innerHTML = '<div class="empty-state">Cadastre pelo menos 2 integrantes para usar o acerto de contas.</div>'; return; }
+        const container = document.getElementById('divisaoContainer'); 
+        if (!container) return;
+
+        // 1. ATUALIZA O NOME DO MÊS LÁ NO TOPO DA ABA
+        let tituloMes = document.getElementById('mesAcertoTitulo');
+        if(tituloMes) {
+            tituloMes.innerText = formatarMesAno(dataFiltroAtual);
+        }
+
+        if (usuarios.length < 2) { 
+            container.innerHTML = '<div class="empty-state">Cadastre pelo menos 2 integrantes para usar o acerto de contas.</div>'; 
+            return; 
+        }
 
         let u1 = usuarios[0]; let u2 = usuarios[1]; let m = dataFiltroAtual.getMonth(); let a = dataFiltroAtual.getFullYear();
         let gastoCasa = 0; let gPes1 = 0; let gPes2 = 0;
 
         transacoes.forEach(tx => {
-            let [ano, mes, dia] = tx.data.split('-'); let d = new Date(ano, mes - 1, dia);
+            let [ano, mes, dia] = tx.data.split('-').map(Number); let d = new Date(ano, mes - 1, dia);
             if (d.getMonth() === m && d.getFullYear() === a && tx.tipo === 'despesa') {
                 if (tx.categoria.startsWith('Casa -')) gastoCasa += tx.valor;
                 else if (tx.categoria === `Pessoal - ${u1.nome}`) gPes1 += tx.valor;
@@ -1657,8 +1958,44 @@ function carregarTema() {
         let cor1 = 'var(--primary)'; let cor2 = 'var(--green)';
 
         const criarCartao = (titulo, desc, icone, paga1, paga2) => {
-            let p1 = (paga1 / gastoCasa) * 100; let p2 = (paga2 / gastoCasa) * 100; let sobra1 = livre1 - paga1; let sobra2 = livre2 - paga2;
-            return `<div class="split-card"><div class="split-header"><div class="split-title"><span>${icone}</span> ${titulo}</div></div><p class="split-desc">${desc}</p><div class="split-bar-container"><div class="split-bar-1" style="width: ${p1}%; background: ${cor1};">${p1.toFixed(0)}%</div><div class="split-bar-2" style="width: ${p2}%; background: ${cor2};">${p2.toFixed(0)}%</div></div><div class="split-details"><div class="split-user-col"><span class="split-user-name" style="color: ${cor1};">${u1.nome} paga:</span><span class="split-value">${paga1.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span><span class="split-result">Livre: ${sobra1.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></div><div class="split-user-col" style="text-align: right;"><span class="split-user-name" style="color: ${cor2};">${u2.nome} paga:</span><span class="split-value">${paga2.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span><span class="split-result">Livre: ${sobra2.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></div></div></div>`;
+            let p1 = (paga1 / gastoCasa) * 100; 
+            let p2 = (paga2 / gastoCasa) * 100; 
+            let sobra1 = livre1 - paga1; 
+            let sobra2 = livre2 - paga2;
+            
+            // Lógica inteligente para o Saldo do Integrante 1
+            let textoSaldo1 = sobra1 >= 0 ? "Saldo livre:" : "Negativo:";
+            let corSaldo1 = sobra1 >= 0 ? "var(--green)" : "var(--red)";
+            let valorMostrar1 = Math.abs(sobra1); // Math.abs tira o sinal de "menos" para não ficar "Negativo: -R$ 50"
+
+            // Lógica inteligente para o Saldo do Integrante 2
+            let textoSaldo2 = sobra2 >= 0 ? "Saldo livre:" : "Negativo:";
+            let corSaldo2 = sobra2 >= 0 ? "var(--green)" : "var(--red)";
+            let valorMostrar2 = Math.abs(sobra2);
+            
+            return `<div class="split-card" style="cursor: pointer;" onclick="abrirDetalhesDivisao('${titulo}', ${p1}, ${p2})" title="Clique para ver conta por conta">
+                <div class="split-header">
+                    <div class="split-title"><span>${icone}</span> ${titulo}</div>
+                </div>
+                <p class="split-desc">${desc}</p>
+                <div class="split-bar-container">
+                    <div class="split-bar-1" style="width: ${p1}%; background: ${cor1};">${p1.toFixed(0)}%</div>
+                    <div class="split-bar-2" style="width: ${p2}%; background: ${cor2};">${p2.toFixed(0)}%</div>
+                </div>
+                <div class="split-details">
+                    <div class="split-user-col">
+                        <span class="split-user-name" style="color: ${cor1};">${u1.nome} paga:</span>
+                        <span class="split-value">${paga1.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                        <span class="split-result" style="color: ${corSaldo1};">${textoSaldo1} ${valorMostrar1.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                    </div>
+                    <div class="split-user-col" style="text-align: right;">
+                        <span class="split-user-name" style="color: ${cor2};">${u2.nome} paga:</span>
+                        <span class="split-value">${paga2.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                        <span class="split-result" style="color: ${corSaldo2};">${textoSaldo2} ${valorMostrar2.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 15px; font-size: 0.8rem; color: var(--primary); font-weight: 600;">Clique para ver divisão detalhada</div>
+            </div>`;
         };
 
         let html = htmlPessoais; 
@@ -1695,26 +2032,278 @@ function carregarTema() {
     
     function adicionarDinheiroProjeto(idx) { indexProjetoParaAdd = idx; let p = projetos[idx]; let valorFaltante = p.total - p.atual; document.getElementById('textoAddDinheiro').innerHTML = `Faltam <strong>${valorFaltante.toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong> para conquistar "${p.nome}".`; document.getElementById('inputValorAddDinheiro').value = ""; document.getElementById('modalAddDinheiro').classList.add('active'); }
     function fecharModalAddDinheiro() { document.getElementById('modalAddDinheiro').classList.remove('active'); }
-    function confirmarAddDinheiro() { if (indexProjetoParaAdd === -1) return; let p = projetos[indexProjetoParaAdd]; let num = parseMoeda(document.getElementById('inputValorAddDinheiro').value); if (!isNaN(num) && num > 0) { if (p.atual + num > p.total) num = p.total - p.atual; p.atual += num; localStorage.setItem('financas_premium_projetos', JSON.stringify(projetos)); renderizarProjetos(); fecharModalAddDinheiro(); showToast(p.atual === p.total ? "🎉 PARABÉNS! PROJETO CONCLUÍDO!" : "Dinheiro guardado com sucesso!"); } else { showToast("Digite um valor válido."); } }
+    // --- 1. SALVAR NOVO DEPÓSITO COM AUDITORIA ---
+    function confirmarAddDinheiro() { 
+        if (indexProjetoParaAdd === -1) return; 
+        let p = projetos[indexProjetoParaAdd]; 
+        let num = parseMoeda(document.getElementById('inputValorAddDinheiro').value); 
+        
+        if (!isNaN(num) && num > 0) { 
+            if (p.atual + num > p.total) num = p.total - p.atual; 
+            
+            if (!p.historico) p.historico = [];
+            let hoje = new Date();
+            let dt = hoje.toISOString().split('T')[0];
+            let hr = hoje.getHours().toString().padStart(2, '0') + ":" + hoje.getMinutes().toString().padStart(2, '0');
+            
+            let valorAnterior = p.atual;
+            let valorAtualizado = p.atual + num;
 
-    function renderizarProjetos() {
-        const container = document.getElementById('listaProjetosContainer'); const dicas = document.getElementById('dicasEconomiaContainer'); if (!container) return;
-        container.innerHTML = ''; dicas.innerHTML = '';
-        if (projetos.length === 0) { container.innerHTML = '<div class="empty-state">Você ainda não tem nenhum projeto. Que tal criar uma meta para sua próxima viagem ou reforma?</div>'; return; }
+            // Salva o registro técnico exato
+            p.historico.push({ timestamp: Date.now(), data: dt, hora: hr, valorAnterior: valorAnterior, valorAdicionado: num, valorAtualizado: valorAtualizado });
+            p.atual = valorAtualizado; 
 
-        let algumProjetoIncompleto = projetos.some(p => p.atual < p.total);
-        if (algumProjetoIncompleto && transacoes.length > 0) {
-            let m = dataFiltroAtual.getMonth(); let a = dataFiltroAtual.getFullYear(); let gastosVariaveis = {}; let totalGastoVariavel = 0;
-            transacoes.forEach(tx => { let [tA, tM, tD] = tx.data.split('-').map(Number); let d = new Date(tA, tM - 1, tD); if (d.getMonth() === m && d.getFullYear() === a && tx.tipo === 'despesa') { if (tx.categoria.startsWith('Pessoal') || tx.categoria.includes('Mercado') || tx.categoria.includes('Outros')) { let catPura = tx.categoria.replace('Pessoal - ', '').replace('Casa - ', ''); if(!gastosVariaveis[catPura]) gastosVariaveis[catPura] = 0; gastosVariaveis[catPura] += tx.valor; totalGastoVariavel += tx.valor; } } });
-            let maiorGasto = Object.keys(gastosVariaveis).reduce((a, b) => gastosVariaveis[a] > gastosVariaveis[b] ? a : b, "");
-            if (maiorGasto && gastosVariaveis[maiorGasto] > 50) { let economiaSugerida = gastosVariaveis[maiorGasto] * 0.20; dicas.innerHTML = `<div class="ai-tip-card"><div style="font-size: 2rem;">💡</div><div><h4 style="margin-bottom: 5px; color: var(--primary);">Dica do Oráculo para poupar</h4><p style="font-size: 0.9rem; line-height: 1.4; color: var(--text);">Este mês você já gastou <strong>${gastosVariaveis[maiorGasto].toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong> em <strong>${maiorGasto}</strong>.<br>Se você reduzir esse gasto em apenas 20% no próximo mês, você consegue guardar <strong>mais ${economiaSugerida.toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong> para os seus projetos!</p></div></div>`; }
+            localStorage.setItem('financas_premium_projetos', JSON.stringify(projetos)); 
+            salvarNaNuvemFirebase(); 
+            renderizarProjetos(); 
+            fecharModalAddDinheiro(); 
+            showToast(p.atual === p.total ? "🎉 PARABÉNS! PROJETO CONCLUÍDO!" : "Dinheiro guardado com sucesso!"); 
+        } else { 
+            showToast("Digite um valor válido."); 
+        } 
+    }
+
+    // --- RENDERIZAR O HISTÓRICO BLINDADO CONTRA ERROS ---
+let indexProjetoHistorico = -1;
+
+function abrirHistoricoProjeto(idx) {
+    try {
+        indexProjetoHistorico = idx;
+        let p = projetos[idx];
+        
+        document.getElementById('histProjIcone').innerText = p.icone || '🎯';
+        document.getElementById('histProjTitulo').innerText = p.nome || 'Projeto';
+        
+        let container = document.getElementById('listaHistoricoProjeto');
+        container.innerHTML = '';
+        
+        if (!p.historico || p.historico.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: var(--secondary-text); font-size: 0.9rem; padding: 20px 0;">Nenhum depósito registrado ainda.</p>';
+        } else {
+            let histOrd = [...p.historico].sort((a, b) => b.timestamp - a.timestamp);
+            
+            histOrd.forEach(dep => {
+                // 🛡️ PROTEÇÃO: Se faltar algum dado antigo, ele assume '0' ou '--' e não quebra a tela!
+                let dtFmt = dep.data ? dep.data.split('-').reverse().join('/') : '--/--/----';
+                let valAnt = dep.valorAnterior || 0;
+                let valAdd = dep.valorAdicionado || dep.valor || 0;
+                let valAtual = dep.valorAtualizado || 0;
+                let horaStr = dep.hora || '--:--';
+                
+                container.innerHTML += `
+                <div style="background: var(--card); border: 1px solid var(--border-hover); border-radius: 16px; padding: 15px; margin-bottom: 12px; position: relative;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px dashed var(--border-hover); padding-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--primary);"></div>
+                            <span style="font-size: 0.85rem; color: var(--secondary-text); font-weight: 600;">${dtFmt} às ${horaStr}</span>
+                        </div>
+                        <button onclick="event.stopPropagation(); excluirDepositoProjeto(${dep.timestamp})" title="Apagar contribuição" style="background: rgba(239, 68, 68, 0.1); color: var(--red); border: none; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 5px; font-size: 0.9rem;">
+                        <span style="color: var(--secondary-text);">Valor Anterior:</span>
+                        <span style="color: var(--text); text-align: right;">${valAnt.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</span>
+                        
+                        <span style="color: var(--secondary-text);">Adicionado:</span>
+                        <div onclick="event.stopPropagation(); abrirEdicaoDepProj(${dep.timestamp})" style="background: rgba(34, 197, 94, 0.1); color: var(--green); padding: 4px 10px; border-radius: 8px; cursor: pointer; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 6px; transition: 0.2s;" title="Clique para editar este valor">
+                            <strong style="font-size: 1.05rem;">+ ${valAdd.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</strong>
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                        </div>
+
+                        <span style="color: var(--secondary-text); margin-top: 5px;">Valor Atualizado:</span>
+                        <span style="color: var(--text); font-weight: 700; text-align: right; margin-top: 5px;">${valAtual.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</span>
+                    </div>
+                </div>`;
+            });
+        }
+        
+        let modal = document.getElementById('modalHistoricoProjeto');
+        if(modal) {
+            modal.classList.add('active');
+        } else {
+            showToast("Erro HTML: Modal do histórico não foi encontrado.");
+        }
+    } catch (e) {
+        console.error("Erro ao abrir histórico:", e);
+        showToast("Erro ao abrir dados antigos. Faça um novo depósito para limpar!");
+    }
+}
+
+
+
+
+    function fecharHistoricoProjeto() { document.getElementById('modalHistoricoProjeto').classList.remove('active'); }
+
+    // --- 3. LÓGICA DE EDITAR UMA CONTRIBUIÇÃO ESPECÍFICA ---
+    document.getElementById('inputEditaDepProj').addEventListener('input', mascaraMoeda);
+
+    function abrirEdicaoDepProj(timestamp) {
+        let p = projetos[indexProjetoHistorico];
+        let dep = p.historico.find(d => d.timestamp === timestamp);
+        if(!dep) return;
+
+        document.getElementById('hiddenTimestampDep').value = timestamp;
+        let dtFmt = dep.data.split('-').reverse().join('/');
+        document.getElementById('dataEdicaoDep').innerText = `Data Original: ${dtFmt}, ${dep.hora}`;
+        document.getElementById('inputEditaDepProj').value = dep.valorAdicionado.toLocaleString("pt-BR", {style:"currency",currency:"BRL"});
+        
+        document.getElementById('modalEditarDepProj').classList.add('active');
+    }
+
+    function fecharEditarDepProj() { document.getElementById('modalEditarDepProj').classList.remove('active'); }
+
+    function excluirDepositoProjeto(timestamp) {
+        // SVG de Alerta Vermelho (o mesmo do Oráculo)
+        const svgAlertaVermelho = `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline; margin-right: 8px; vertical-align: text-bottom;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
+
+        // Chama o SEU modal bonito usando o SVG no título
+        document.querySelector('.conf-modal h3').innerHTML = `${svgAlertaVermelho} Apagar Depósito`;
+        document.getElementById('textoConfExclusao').innerHTML = "Deseja apagar este depósito? O valor será retirado do progresso do seu projeto.";
+        
+        // Injeta os botões chamando a função real de exclusão abaixo
+        document.getElementById('boxBotoesConf').innerHTML = `
+            <div style="display:flex; gap:10px; margin-top: 10px;">
+                <button class="btn-conf btn-no" style="flex:1;" onclick="cancelarExclusao()">Cancelar</button>
+                <button class="btn-conf btn-yes" style="flex:1; background: var(--red); color: white;" onclick="confirmarExclusaoDeposito(${timestamp})">Sim, Apagar</button>
+            </div>
+        `;
+        document.getElementById('confModal').classList.add('active');
+    }
+
+    function confirmarExclusaoDeposito(timestamp) {
+        let p = projetos[indexProjetoHistorico];
+        let depIndex = p.historico.findIndex(d => d.timestamp === timestamp);
+        
+        if (depIndex !== -1) {
+            p.historico.splice(depIndex, 1); // Remove da memória
+            
+            // Recalcula toda a matemática do projeto para não bugar
+            p.historico.sort((a,b) => a.timestamp - b.timestamp); 
+            let saldoRodando = 0;
+            
+            p.historico.forEach(d => {
+                let valorReal = d.valorAdicionado || d.valor || 0;
+                d.valorAnterior = saldoRodando;
+                saldoRodando += valorReal;
+                d.valorAdicionado = valorReal;
+                d.valorAtualizado = saldoRodando;
+            });
+            
+            p.atual = saldoRodando > p.total ? p.total : saldoRodando;
+            
+            // Salva as mudanças, fecha os modais e avisa o usuário
+            localStorage.setItem('financas_premium_projetos', JSON.stringify(projetos));
+            salvarNaNuvemFirebase();
+            renderizarProjetos();
+            abrirHistoricoProjeto(indexProjetoHistorico); 
+            
+            cancelarExclusao(); // Esconde a tela de confirmação
+            showToast("Depósito apagado com sucesso!");
+        }
+    }
+
+    function salvarEdicaoDepProj() {
+        let p = projetos[indexProjetoHistorico];
+        let timestamp = parseInt(document.getElementById('hiddenTimestampDep').value);
+        let novoValor = parseMoeda(document.getElementById('inputEditaDepProj').value);
+
+        if(isNaN(novoValor) || novoValor < 0) { showToast("Digite um valor válido."); return; }
+
+        let depIndex = p.historico.findIndex(d => d.timestamp === timestamp);
+        if (depIndex === -1) return;
+
+        if (novoValor === 0) { 
+            p.historico.splice(depIndex, 1); 
+        } else { 
+            p.historico[depIndex].valorAdicionado = novoValor; 
+            p.historico[depIndex].valor = novoValor; // Força compatibilidade com a versão antiga
         }
 
-        projetos.forEach((p, idx) => {
-            let perc = (p.atual / p.total) * 100; let finalizado = perc === 100; let corBarra = finalizado ? 'var(--green)' : '#8b5cf6';
-            container.innerHTML += `<div class="project-card" style="${finalizado ? 'border-color: var(--green); background: rgba(34, 197, 94, 0.05);' : ''}"><div class="project-header"><div class="project-icon">${p.icone}</div><div class="project-info"><div class="project-title">${p.nome}</div><span class="project-progress-text">${p.atual.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} de ${p.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></div><strong style="color: ${corBarra}; font-size: 1.2rem;">${perc.toFixed(0)}%</strong></div><div class="progress-track" style="height: 10px; margin-bottom: 15px;"><div class="progress-fill" style="width: ${perc}%; background: ${corBarra}; box-shadow: 0 0 10px ${corBarra};"></div></div><div class="project-actions">${!finalizado ? `<button class="btn-proj-action btn-add-funds" onclick="adicionarDinheiroProjeto(${idx})">➕ Guardar Dinheiro</button>` : `<div style="flex: 1; text-align: center; color: var(--green); font-weight: bold;">🎉 Projeto Concluído!</div>`}<button class="btn-proj-action btn-edit-proj" style="flex: 0 0 80px;" onclick="abrirModalProjeto(${idx})">Editar</button></div></div>`;
+        // 🛡️ RECALCULA TUDO DO ZERO APÓS A EDIÇÃO
+        p.historico.sort((a,b) => a.timestamp - b.timestamp); 
+        let saldoRodando = 0;
+        
+        p.historico.forEach(d => {
+            let valorReal = d.valorAdicionado || d.valor || 0;
+            d.valorAnterior = saldoRodando;
+            saldoRodando += valorReal;
+            d.valorAdicionado = valorReal;
+            d.valorAtualizado = saldoRodando;
         });
+        
+        p.atual = saldoRodando > p.total ? p.total : saldoRodando;
+
+        localStorage.setItem('financas_premium_projetos', JSON.stringify(projetos));
+        salvarNaNuvemFirebase(); 
+        renderizarProjetos(); 
+        fecharEditarDepProj(); 
+        abrirHistoricoProjeto(indexProjetoHistorico); 
+        showToast("Contribuição atualizada!");
     }
+    
+    function renderizarProjetos() {
+    const container = document.getElementById('listaProjetosContainer'); 
+    const dicas = document.getElementById('dicasEconomiaContainer'); 
+    if (!container) return;
+
+    container.innerHTML = ''; 
+    if(dicas) dicas.innerHTML = '';
+    
+    if (projetos.length === 0) { 
+        container.innerHTML = '<div class="empty-state">Você ainda não tem nenhum projeto. Que tal criar uma meta para sua próxima viagem ou reforma?</div>'; 
+        return; 
+    }
+
+    let algumProjetoIncompleto = projetos.some(p => p.atual < p.total);
+    if (algumProjetoIncompleto && transacoes.length > 0) {
+        let m = dataFiltroAtual.getMonth(); let a = dataFiltroAtual.getFullYear(); let gastosVariaveis = {}; 
+        transacoes.forEach(tx => { 
+            let [tA, tM, tD] = tx.data.split('-').map(Number); 
+            let d = new Date(tA, tM - 1, tD); 
+            if (d.getMonth() === m && d.getFullYear() === a && tx.tipo === 'despesa') { 
+                if (tx.categoria.startsWith('Pessoal') || tx.categoria.includes('Mercado') || tx.categoria.includes('Outros')) { 
+                    let catPura = tx.categoria.replace('Pessoal - ', '').replace('Casa - ', ''); 
+                    if(!gastosVariaveis[catPura]) gastosVariaveis[catPura] = 0; 
+                    gastosVariaveis[catPura] += tx.valor; 
+                } 
+            } 
+        });
+        let maiorGasto = Object.keys(gastosVariaveis).reduce((a, b) => gastosVariaveis[a] > gastosVariaveis[b] ? a : b, "");
+        if (maiorGasto && gastosVariaveis[maiorGasto] > 50) { 
+            let economiaSugerida = gastosVariaveis[maiorGasto] * 0.20; 
+            dicas.innerHTML = `<div class="ai-tip-card"><div style="font-size: 2rem;">💡</div><div><h4 style="margin-bottom: 5px; color: var(--primary);">Dica do Oráculo para poupar</h4><p style="font-size: 0.9rem; line-height: 1.4; color: var(--text);">Este mês você já gastou <strong>${gastosVariaveis[maiorGasto].toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong> em <strong>${maiorGasto}</strong>.<br>Se você reduzir esse gasto em apenas 20% no próximo mês, você consegue guardar <strong>mais ${economiaSugerida.toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong> para os seus projetos!</p></div></div>`; 
+        }
+    }
+
+    projetos.forEach((p, idx) => {
+        let perc = p.total > 0 ? (p.atual / p.total) * 100 : 0; 
+        if (perc > 100) perc = 100; // Impede a barra de vazar do card
+        let finalizado = perc === 100; 
+        let corBarra = finalizado ? 'var(--green)' : '#8b5cf6';
+        let estiloCard = finalizado ? 'border-color: var(--green); background: rgba(34, 197, 94, 0.05);' : '';
+        
+        container.innerHTML += `
+        <div class="project-card" style="cursor: pointer; ${estiloCard}" onclick="abrirHistoricoProjeto(${idx})">
+            <div class="project-header">
+                <div class="project-icon">${p.icone || '🎯'}</div>
+                <div class="project-info">
+                    <div class="project-title">${p.nome}</div>
+                    <span class="project-progress-text">${p.atual.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} de ${p.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                </div>
+                <strong style="color: ${corBarra}; font-size: 1.2rem;">${perc.toFixed(0)}%</strong>
+            </div>
+            <div class="progress-track" style="height: 10px; margin-bottom: 15px;">
+                <div class="progress-fill" style="width: ${perc}%; background: ${corBarra}; box-shadow: 0 0 10px ${corBarra};"></div>
+            </div>
+            <div class="project-actions">
+                ${!finalizado ? `<button class="btn-proj-action btn-add-funds" onclick="event.stopPropagation(); adicionarDinheiroProjeto(${idx})">➕ Guardar</button>` : `<div style="flex: 1; text-align: center; color: var(--green); font-weight: bold;">🎉 Concluído!</div>`}
+                <button class="btn-proj-action btn-edit-proj" style="flex: 0 0 80px;" onclick="event.stopPropagation(); abrirModalProjeto(${idx})">Editar</button>
+            </div>
+        </div>`;
+    });
+}
 
     const listaEmojis = ['🎯','🚗','✈️','🏠','💻','📱','📚','💍','🏖️','🛋️','🎓','🐶','👶','🎮','🎸','🚲','🏥','🎉','👗','🛠️','⛵','🛵','👟','💼'];
     function inicializarEmojis() { const grid = document.getElementById('emojiGridBox'); if(!grid) return; grid.innerHTML = ''; listaEmojis.forEach(emj => { grid.innerHTML += `<div style="font-size: 1.6rem; text-align: center; cursor: pointer; padding: 5px; border-radius: 8px; transition: 0.2s;" onclick="selecionarEmojiProj('${emj}')" onmouseover="this.style.background='var(--input-bg)'" onmouseout="this.style.background='transparent'">${emj}</div>`; }); }
@@ -1903,17 +2492,22 @@ function carregarTema() {
     }
 
     function liberarTelaBiometria() {
-    sessionStorage.setItem('cofreAberto', 'true'); 
-    sessaoAtiva = true;
-    document.getElementById('loginOverlay').style.display = 'none';
-    
-    // Se o Firebase ainda estiver baixando os dados, avisa e espera!
-    if (!isAppIniciado) {
-        showToast("⏳ Sincronizando cofre...");
-    } else {
-        verificarPerfilCelular(); 
+        sessionStorage.setItem('cofreAberto', 'true'); 
+        sessaoAtiva = true;
+        
+        // Esconde a tela preta inicial (se estiver lá)
+        document.getElementById('loginOverlay').style.display = 'none';
+        
+        // Esconde a tela roxa estilo Nubank (se estiver lá)
+        let lockScreen = document.getElementById('lockScreenOverlay');
+        if(lockScreen) lockScreen.style.display = 'none';
+        
+        if (!isAppIniciado) {
+            showToast("⏳ Sincronizando cofre...");
+        } else {
+            verificarPerfilCelular(); 
+        }
     }
-}
 
     // ==========================================
     // ⚙️ EVENTOS AUTOMÁTICOS E APP (PWA)
@@ -1923,10 +2517,21 @@ function carregarTema() {
 
     document.addEventListener("DOMContentLoaded", () => {
         const temBiometria = localStorage.getItem('biometriaAppId');
+        const cofreAberto = sessionStorage.getItem('cofreAberto');
         const overlay = document.getElementById('loginOverlay');
-        if (temBiometria && overlay.style.display !== 'none') {
-            setTimeout(() => { usarBiometria(); }, 800);
-            overlay.addEventListener("click", () => { if(overlay.style.display !== 'none') usarBiometria(); }, { once: true });
+        
+        // 1. Tira o piscar da tela preta no F5 se a sessão já estiver aberta
+        if (cofreAberto === 'true') {
+            overlay.style.display = 'none';
+        } 
+        // 2. Só puxa a digital automaticamente se a pessoa REALMENTE precisar logar
+        else if (temBiometria && overlay.style.display !== 'none') {
+            setTimeout(() => { 
+                if (sessionStorage.getItem('cofreAberto') !== 'true') usarBiometria(); 
+            }, 800);
+            overlay.addEventListener("click", () => { 
+                if (overlay.style.display !== 'none' && sessionStorage.getItem('cofreAberto') !== 'true') usarBiometria(); 
+            }, { once: true });
         }
 
         const botaoInstalar = document.getElementById('btnInstalar');
@@ -2051,6 +2656,128 @@ function processarComandoVoz(frase) {
                 }
             }
         });
+    }
+    
+    // --- FUNÇÕES DO CARD DE DETALHES DA CONTA ---
+    let contaDetalheIndexAtual = -1;
+
+    function abrirDetalhesConta(idx) {
+        contaDetalheIndexAtual = idx;
+        let tx = transacoes[idx];
+        
+        // Preenche os dados
+        document.getElementById('detalheTitulo').innerText = tx.descricao;
+        document.getElementById('detalheValor').innerText = tx.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+        document.getElementById('detalheData').innerText = tx.data.split('-').reverse().join('/');
+        document.getElementById('detalheCategoria').innerText = tx.categoria.replace('Casa - ', '').replace('Pessoal - ', '');
+        
+        // Verifica se é parcela ou fixa
+        let repText = "Única";
+        if (tx.descricao.includes('(') && tx.descricao.includes('/')) repText = "Parcelada";
+        document.getElementById('detalheRepeticao').innerText = repText;
+
+        // Pinta o ícone dependendo de quem é a conta
+        const svgCasa = `<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>`;
+        const svgPessoal = `<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+        
+        document.getElementById('detalheIcone').innerHTML = tx.categoria.startsWith('Casa') ? svgCasa : svgPessoal;
+        
+        // Mostra o botão "Dar Baixa" apenas se for uma despesa que ainda NÃO foi paga
+        let btnBaixa = document.getElementById('btnDarBaixa');
+        if (tx.tipo === 'despesa' && !tx.pago) {
+            btnBaixa.style.display = 'flex';
+        } else {
+            btnBaixa.style.display = 'none';
+        }
+
+        // Abre o modal
+        document.getElementById('modalDetalhesConta').classList.add('active');
+    }
+
+    function fecharDetalhesConta() {
+        document.getElementById('modalDetalhesConta').classList.remove('active');
+    }
+
+    function editarContaPeloDetalhe() {
+        fecharDetalhesConta();
+        // Um pequeno delay para a transição ficar suave
+        setTimeout(() => {
+            abrirModalTransacao(contaDetalheIndexAtual);
+        }, 200);
+    }
+    
+    function darBaixaConta() {
+        if (contaDetalheIndexAtual === -1) return;
+        
+        // 1. Muda o status da conta para PAGA na memória
+        transacoes[contaDetalheIndexAtual].pago = true;
+        
+        // 2. Salva no celular e força o salvamento na Nuvem (Firebase)
+        localStorage.setItem('financas_premium_transacoes', JSON.stringify(transacoes));
+        salvarNaNuvemFirebase(); 
+        
+        // 3. Fecha a tela e avisa o usuário com um SVG bonito
+        fecharDetalhesConta();
+        showToast(`<div style="display:flex; align-items:center; gap:8px;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Conta marcada como paga!</div>`);
+        
+        // 4. Atualiza os gráficos, a linha do tempo e some com a pendência da tela inicial
+        atualizarCaixa();
+        atualizarTela();
+        renderizarVencimentos(); // Força o painel de pendências a sumir com essa conta
+    }
+    
+    // --- FUNÇÕES DOS DETALHES DA DIVISÃO (CONTA POR CONTA) ---
+    function abrirDetalhesDivisao(titulo, perc1, perc2) {
+        document.getElementById('tituloModalDivisao').innerText = titulo;
+        let containerLista = document.getElementById('listaContasDivisao');
+        containerLista.innerHTML = '';
+
+        let u1Nome = usuarios[0].nome;
+        let u2Nome = usuarios[1].nome;
+        let m = dataFiltroAtual.getMonth(); 
+        let a = dataFiltroAtual.getFullYear();
+
+        // Puxa APENAS as despesas do mês que são da Casa
+        let contasCasa = transacoes.filter(tx => {
+            let [ano, mes, dia] = tx.data.split('-').map(Number);
+            let d = new Date(ano, mes - 1, dia);
+            return d.getMonth() === m && d.getFullYear() === a && tx.tipo === 'despesa' && tx.categoria.startsWith('Casa -');
+        });
+
+        if (contasCasa.length === 0) {
+            containerLista.innerHTML = '<p style="text-align:center; color: var(--secondary-text); font-size: 0.9rem;">Nenhuma conta de casa encontrada para fatiar.</p>';
+        } else {
+            // Desenha um cardzinho para CADA conta
+            contasCasa.forEach(tx => {
+                // Calcula quanto cada um paga daquela conta exata usando a porcentagem do cenário escolhido
+                let valor1 = tx.valor * (perc1 / 100);
+                let valor2 = tx.valor * (perc2 / 100);
+
+                containerLista.innerHTML += `
+                <div style="padding: 15px; border: 1px solid var(--border-hover); border-radius: 16px; margin-bottom: 12px; background: var(--card); box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px dashed var(--border-hover); padding-bottom: 10px;">
+                        <span style="font-weight: 600; color: var(--text); font-size: 1rem;">${tx.descricao}</span>
+                        <span style="font-weight: 700; color: var(--red); font-size: 1.1rem;">${tx.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="color: var(--secondary-text); margin-bottom: 2px;">${u1Nome}</span>
+                            <span style="color: var(--primary); font-weight: 700; font-size: 1rem;">${valor1.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; text-align: right;">
+                            <span style="color: var(--secondary-text); margin-bottom: 2px;">${u2Nome}</span>
+                            <span style="color: var(--green); font-weight: 700; font-size: 1rem;">${valor2.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                        </div>
+                    </div>
+                </div>`;
+            });
+        }
+
+        document.getElementById('modalDetalhesDivisao').classList.add('active');
+    }
+
+    function fecharDetalhesDivisao() {
+        document.getElementById('modalDetalhesDivisao').classList.remove('active');
     }
 </script>
 
