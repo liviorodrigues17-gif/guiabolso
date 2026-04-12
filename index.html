@@ -1075,25 +1075,28 @@ body {
                 }
             }
         }
-
+        
         // 4. Tranca Automática (Minimizou o App, ele bloqueia na hora)
         document.addEventListener("visibilitychange", () => {
             let temBiometria = localStorage.getItem('biometriaAppId');
             if (document.visibilityState === "hidden") {
+                // MINIMIZOU: Sobe o vidro, mas NÃO APAGA a chave do sessionStorage
+                // Assim, se for só um F5 (Refresh), o app lembra de você!
                 if (sessaoAtiva && temBiometria) {
-                    sessionStorage.removeItem('cofreAberto'); // Tira a chave
-                    document.getElementById('appMainContainer').style.display = 'none'; // Esconde os dados
+                    document.getElementById('appMainContainer').style.display = 'none'; 
                     atualizarTelaBloqueio();
-                    document.getElementById('lockScreenOverlay').style.display = 'flex'; // Sobe o vidro
+                    document.getElementById('lockScreenOverlay').style.display = 'flex'; 
                 }
             } else if (document.visibilityState === "visible") {
                 if (typeof db !== 'undefined' && db.disableNetwork) { db.disableNetwork().then(() => db.enableNetwork()); }
                 if (document.getElementById('lockScreenOverlay').style.display === 'flex') {
                     atualizarTelaBloqueio();
-                    setTimeout(() => { usarBiometria(false); }, 400); // Pede a digital
+                    setTimeout(() => { usarBiometria(false); }, 400); 
                 }
             }
         });
+
+       
 
         // 5. Atualiza a foto e o nome do vidro
         function atualizarTelaBloqueio() {
@@ -1759,7 +1762,7 @@ body {
     
         
         function solicitarExclusaoUser() { document.getElementById('textoConfExclusao').innerHTML = `Excluir <strong>${usuarios[editIndex].nome}</strong>?`; document.getElementById('boxBotoesConf').innerHTML = `<div style="display:flex;gap:10px;"><button class="btn-conf btn-no" style="flex:1;" onclick="cancelarExclusao()">Cancelar</button><button class="btn-conf btn-yes" style="flex:1;" onclick="confirmarExclusaoUser()">Sim, excluir</button></div>`; document.getElementById('confModal').classList.add('active'); }
-        function confirmarExclusaoUser() { usuarios.splice(editIndex, 1); localStorage.setItem('financas_premium_dados', JSON.stringify(usuarios)); cancelarExclusao(); fecharModal(); atualizarTela(); atualizarCaixa(); showToast(`Excluído.`); }
+        function confirmarExclusaoUser() { let nomeExcluido = usuarios[editIndex].nome; usuarios.splice(editIndex, 1); localStorage.setItem('financas_premium_dados', JSON.stringify(usuarios)); if (sessionStorage.getItem('usuarioLogado') === nomeExcluido) { if (usuarios.length > 0) { sessionStorage.setItem('usuarioLogado', usuarios[0].nome); localStorage.setItem('meuPerfilFixo_GuiaBolso', usuarios[0].nome); } else { sessionStorage.removeItem('usuarioLogado'); localStorage.removeItem('meuPerfilFixo_GuiaBolso'); fecharModal(); cancelarExclusao(); verificarPerfilCelular(); return; } } cancelarExclusao(); fecharModal(); atualizarTela(); atualizarCaixa(); showToast(`Perfil Excluído.`); }
     
         // ==========================================
         // 🛠️ DRAG AND DROP
