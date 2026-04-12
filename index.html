@@ -1,4 +1,4 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
     <html lang="pt-br">
     <head>
         <meta charset="UTF-8">
@@ -972,6 +972,7 @@
             const lockScreen = document.getElementById('lockScreenOverlay');
             const appContainer = document.getElementById('appMainContainer');
 
+            // Esconde tudo no início
             if (overlayLogin) overlayLogin.style.display = 'none';
             if (lockScreen) lockScreen.style.display = 'none';
             if (appContainer) appContainer.style.display = 'none';
@@ -982,18 +983,21 @@
                 let temBiometria = localStorage.getItem('biometriaAppId');
 
                 if (cofreAberto === 'true') {
+                    // Já desbloqueou com digital ou senha nesta sessão
                     if (appContainer) appContainer.style.display = 'block';
                     verificarPerfilCelular();
                 } else if (temBiometria) {
+                    // Tem digital, mas a sessão expirou: Mostra Vidro Fosco
                     atualizarTelaBloqueio();
                     if (lockScreen) lockScreen.style.display = 'flex';
                     setTimeout(() => { usarBiometria(false); }, 500);
                 } else {
-                    sessionStorage.setItem('cofreAberto', 'true');
-                    if (appContainer) appContainer.style.display = 'block';
-                    verificarPerfilCelular();
+                    // Logado no Firebase mas sem digital: Exige Login de Senha por segurança
+                    // (Isso evita entrar direto se você sair e entrar de novo)
+                    if (overlayLogin) overlayLogin.style.display = 'flex';
                 }
             } else {
+                // Deslogado: Tela de e-mail e senha
                 sessaoAtiva = false;
                 sessionStorage.removeItem('cofreAberto');
                 if (overlayLogin) overlayLogin.style.display = 'flex';
@@ -1004,12 +1008,23 @@
         function liberarTelaBiometria() {
             sessionStorage.setItem('cofreAberto', 'true');
             sessaoAtiva = true;
+            
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('lockScreenOverlay').style.display = 'none';
             document.getElementById('appMainContainer').style.display = 'block';
 
             if (!isAppIniciado) {
-                showToast("⏳ Sincronizando cofre...");
+                // Se o app ainda não carregou os dados do Firebase, carrega agora
+                const cofreRef = db.collection("guiabolso").doc("bancodedados");
+                cofreRef.get().then((doc) => {
+                   if (doc.exists) {
+                       usuarios = doc.data().usuarios || [];
+                       transacoes = doc.data().transacoes || [];
+                       isAppIniciado = true;
+                       verificarPerfilCelular();
+                       atualizarCaixa();
+                   }
+                });
             } else {
                 verificarPerfilCelular();
             }
@@ -2716,6 +2731,7 @@
         });
 
         // 👇 SWIPE BLINDADO (Funciona em qualquer celular)
+         // 🚀 GESTO DE ARRASTAR GLOBAL (Muda o mês em qualquer tela)
         let touchStartX = 0; 
         let touchStartY = 0; 
 
@@ -2730,23 +2746,17 @@
             let deltaX = touchEndX - touchStartX; 
             let deltaY = touchEndY - touchStartY; 
             
-            // Regra de Ouro: O movimento horizontal tem que ser grande (> 60px) 
-            // e o movimento vertical bem pequeno (< 40px) para não atrapalhar a rolagem da página
-            if (Math.abs(deltaX) > 60 && Math.abs(deltaY) < 40) { 
-                
-                // Verifica se o usuário está na aba de Lançamentos ou de Divisão
-                let abaCaixa = document.getElementById('aba-caixa');
-                let abaDiv = document.getElementById('aba-divisao');
-                
-                let isCaixaAtiva = abaCaixa && abaCaixa.classList.contains('active');
-                let isDivAtiva = abaDiv && abaDiv.classList.contains('active');
-
-                if (isCaixaAtiva || isDivAtiva) {
-                    if (deltaX > 0) mudarMes(-1); // Deslizou pra direita (Volta o mês)
-                    else mudarMes(1);             // Deslizou pra esquerda (Avança o mês)
+            // Sensibilidade do movimento horizontal e trava vertical
+            if (Math.abs(deltaX) > 70 && Math.abs(deltaY) < 50) { 
+                if (deltaX > 0) {
+                    mudarMes(-1); // Direita -> Mês Anterior
+                } else {
+                    mudarMes(1);  // Esquerda -> Próximo Mês
                 }
+                // Feedback tátil leve (se o celular suportar)
+                if (navigator.vibrate) navigator.vibrate(10);
             } 
-        }, {passive: true});  
+        }, {passive: true});
     
         }
     
