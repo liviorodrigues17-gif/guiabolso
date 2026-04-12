@@ -329,7 +329,7 @@
         <body>
           
           <div id="toast-container"></div>
-        <div id="loginOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: sans-serif;">
+        <div id="loginOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 9999; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: sans-serif;">
             <div style="background: #1e293b; padding: 2rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); width: 90%; max-width: 400px;">
                 <h2 style="margin-bottom: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px;"> <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect> <path d="M7 11V7a5 5 0 0 1 10 0v4"></path> </svg> Guia Bolso </h2>
                 <p style="color: #94a3b8; margin-bottom: 1.5rem;">Identifique-se para acessar o cofre da família</p>
@@ -967,41 +967,38 @@
         const lockScreen = document.getElementById('lockScreenOverlay');
         const appContainer = document.getElementById('appMainContainer');
 
+        // Reset inicial: Esconde tudo para decidir o que mostrar
+        if (overlayLogin) overlayLogin.style.display = 'none';
+        if (lockScreen) lockScreen.style.display = 'none';
+        if (appContainer) appContainer.style.display = 'none';
+
         if (user) {
             sessaoAtiva = true;
             let cofreAberto = sessionStorage.getItem('cofreAberto');
             let temBiometria = localStorage.getItem('biometriaAppId');
 
             if (cofreAberto === 'true') {
-                // 1. Já destrancou nesta sessão: entra direto
-                if (overlayLogin) overlayLogin.style.display = 'none';
-                if (lockScreen) lockScreen.style.display = 'none';
-                if (appContainer) appContainer.style.display = 'block';
+                // ✅ JÁ DESBLOQUEOU NESTA SESSÃO: Entra direto no app
+                appContainer.style.display = 'block';
                 verificarPerfilCelular();
             } 
             else if (temBiometria) {
-                // 2. Está logado mas o cofre está trancado: Mostra a TELA DE VIDRO
-                if (overlayLogin) overlayLogin.style.display = 'none';
-                if (lockScreen) {
-                    atualizarTelaBloqueio(); // Carrega sua foto e nome
-                    lockScreen.style.display = 'flex';
-                }
-                if (appContainer) appContainer.style.display = 'none';
+                // 🔒 LOGADO, MAS COFRE TRANCADO: Mostra a TELA DE VIDRO (Estilo Banco)
+                atualizarTelaBloqueio(); 
+                lockScreen.style.display = 'flex';
                 
-                // Tenta puxar a biometria automaticamente após meio segundo
+                // Tenta subir o sensor de digital automaticamente
                 setTimeout(() => { usarBiometria(false); }, 500);
             } 
             else {
-                // 3. Logado mas sem biometria: vai para a tela de login (raro acontecer)
-                if (overlayLogin) overlayLogin.style.display = 'flex';
-                if (lockScreen) lockScreen.style.display = 'none';
+                // Caso raro: Logado mas sem biometria configurada (ex: novo celular)
+                // Mostra o login para ele se re-autenticar e cadastrar a digital
+                overlayLogin.style.display = 'flex';
             }
         } else {
-            // 4. Deslogado total: Tela de login e-mail/senha
+            // ❌ DESLOGADO: Mostra tela de E-mail e Senha
             sessaoAtiva = false;
-            if (overlayLogin) overlayLogin.style.display = 'flex';
-            if (lockScreen) lockScreen.style.display = 'none';
-            if (appContainer) appContainer.style.display = 'none';
+            overlayLogin.style.display = 'flex';
         }
     });
         
@@ -2774,31 +2771,31 @@
         }
     
         async function usarBiometria(isCadastrando = false) {
-            if (!window.PublicKeyCredential) { 
-                if (isCadastrando) liberarTelaBiometria();
-                return; 
-            }
-            try {
-                let credId = localStorage.getItem('biometriaAppId');
-                
-                if (isCadastrando) {
-                    // 🔐 MODO DE CADASTRO: Ocorre SÓ DEPOIS do modal (quando a senha já está certa)
-                    const credential = await navigator.credentials.create({ publicKey: { challenge: gerarDesafio(), rp: { name: "Guia Bolso", id: window.location.hostname }, user: { id: gerarDesafio(), name: "usuario", displayName: "Acesso Seguro" }, pubKeyCredParams: [{ type: "public-key", alg: -7 }], authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" }, timeout: 60000 } });
-                    let idArray = Array.from(new Uint8Array(credential.rawId)); 
-                    localStorage.setItem('biometriaAppId', JSON.stringify(idArray)); 
-                    liberarTelaBiometria();
-                } else {
-                    // 🔓 MODO DE LEITURA: Ocorre quando clica no botão azul (só verifica)
-                    if (!credId) return; // Trava extra
-                    let idArray = new Uint8Array(JSON.parse(credId)); 
-                    await navigator.credentials.get({ publicKey: { challenge: gerarDesafio(), allowCredentials: [{ type: "public-key", id: idArray }], userVerification: "required" } }); 
-                    liberarTelaBiometria();
-                }
-            } catch (erro) { 
-                console.log("Biometria cancelada ou falhou.", erro); 
-                if (isCadastrando) liberarTelaBiometria();
-            }
+        if (!window.PublicKeyCredential) { 
+            if (isCadastrando) liberarTelaBiometria();
+            return; 
         }
+        try {
+            let credId = localStorage.getItem('biometriaAppId');
+            
+            if (isCadastrando) {
+                const credential = await navigator.credentials.create({ /* ... seus dados do desafio ... */ });
+                let idArray = Array.from(new Uint8Array(credential.rawId)); 
+                localStorage.setItem('biometriaAppId', JSON.stringify(idArray)); 
+                liberarTelaBiometria(); // SUCESSO NO CADASTRO
+            } else {
+                if (!credId) return;
+                let idArray = new Uint8Array(JSON.parse(credId)); 
+                await navigator.credentials.get({ publicKey: { challenge: gerarDesafio(), allowCredentials: [{ type: "public-key", id: idArray }], userVerification: "required" } }); 
+                liberarTelaBiometria(); // ✅ SUCESSO NA LEITURA: SÓ AQUI ENTRA NO APP
+            }
+        } catch (erro) { 
+            console.log("Biometria cancelada ou falhou.", erro);
+            // 🛑 AQUI ESTÁ O SEGREDO: Se cair no erro (cancelar), NÃO FAZ NADA.
+            // A tela de vidro (lockScreenOverlay) continuará visível, bloqueando o app.
+            showToast("Digital necessária para acessar.");
+        }
+    }
     
         function liberarTelaBiometria() {
             sessionStorage.setItem('cofreAberto', 'true'); 
