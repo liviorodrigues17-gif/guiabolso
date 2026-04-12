@@ -963,14 +963,15 @@
         const db = firebase.firestore();
         
         // ==========================================
-        // 🔐 GERENCIADOR DE SESSÃO DO FIREBASE
+        // 🔐 MÓDULO DE SEGURANÇA E ACESSO (BANCO)
         // ==========================================
+
+        // 1. O Olheiro do Firebase (Inicia o App)
         firebase.auth().onAuthStateChanged((user) => {
             const overlayLogin = document.getElementById('loginOverlay');
             const lockScreen = document.getElementById('lockScreenOverlay');
             const appContainer = document.getElementById('appMainContainer');
 
-            // Começa escondendo tudo para não piscar tela errada
             if (overlayLogin) overlayLogin.style.display = 'none';
             if (lockScreen) lockScreen.style.display = 'none';
             if (appContainer) appContainer.style.display = 'none';
@@ -981,30 +982,112 @@
                 let temBiometria = localStorage.getItem('biometriaAppId');
 
                 if (cofreAberto === 'true') {
-                    // ✅ Já passou a digital nesta sessão: Entra no App
                     if (appContainer) appContainer.style.display = 'block';
                     verificarPerfilCelular();
-                } 
-                else if (temBiometria) {
-                    // 🔒 Logado, mas cofre trancado: TELA DE VIDRO
-                    atualizarTelaBloqueio(); 
+                } else if (temBiometria) {
+                    atualizarTelaBloqueio();
                     if (lockScreen) lockScreen.style.display = 'flex';
-                    // Chama a digital sozinha
                     setTimeout(() => { usarBiometria(false); }, 500);
-                } 
-                else {
-                    // ⚠️ Logado, mas não quis usar biometria: Entra direto
+                } else {
                     sessionStorage.setItem('cofreAberto', 'true');
                     if (appContainer) appContainer.style.display = 'block';
                     verificarPerfilCelular();
                 }
             } else {
-                // ❌ Deslogado total: Tela de Email e Senha
                 sessaoAtiva = false;
                 sessionStorage.removeItem('cofreAberto');
                 if (overlayLogin) overlayLogin.style.display = 'flex';
             }
         });
+
+        // 2. Destrancar o App (Sucesso)
+        function liberarTelaBiometria() {
+            sessionStorage.setItem('cofreAberto', 'true');
+            sessaoAtiva = true;
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('lockScreenOverlay').style.display = 'none';
+            document.getElementById('appMainContainer').style.display = 'block';
+
+            if (!isAppIniciado) {
+                showToast("⏳ Sincronizando cofre...");
+            } else {
+                verificarPerfilCelular();
+            }
+        }
+
+        // 3. Biometria (Leitura e Cadastro Blindados)
+        async function usarBiometria(isCadastrando = false) {
+            if (!window.PublicKeyCredential) {
+                if (isCadastrando) { showToast("Biometria não suportada. Usando senha."); liberarTelaBiometria(); }
+                else { showToast("Biometria indisponível no aparelho."); }
+                return;
+            }
+            try {
+                let credId = localStorage.getItem('biometriaAppId');
+                if (isCadastrando) {
+                    const credential = await navigator.credentials.create({
+                        publicKey: {
+                            challenge: gerarDesafio(), rp: { name: "Guia Bolso", id: window.location.hostname },
+                            user: { id: gerarDesafio(), name: "usuario", displayName: "Acesso Seguro" },
+                            pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+                            authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
+                            timeout: 60000
+                        }
+                    });
+                    let idArray = Array.from(new Uint8Array(credential.rawId));
+                    localStorage.setItem('biometriaAppId', JSON.stringify(idArray));
+                    showToast("Digital cadastrada!");
+                    liberarTelaBiometria();
+                } else {
+                    if (!credId) return;
+                    let idArray = new Uint8Array(JSON.parse(credId));
+                    await navigator.credentials.get({
+                        publicKey: { challenge: gerarDesafio(), allowCredentials: [{ type: "public-key", id: idArray }], userVerification: "required" }
+                    });
+                    liberarTelaBiometria();
+                }
+            } catch (erro) {
+                console.log("Biometria cancelada/falhou:", erro);
+                if (isCadastrando) {
+                    showToast("Cadastro cancelado. Entrando normalmente...");
+                    liberarTelaBiometria();
+                } else {
+                    showToast("Digital necessária para acessar.");
+                }
+            }
+        }
+
+        // 4. Tranca Automática (Minimizou o App, ele bloqueia na hora)
+        document.addEventListener("visibilitychange", () => {
+            let temBiometria = localStorage.getItem('biometriaAppId');
+            if (document.visibilityState === "hidden") {
+                if (sessaoAtiva && temBiometria) {
+                    sessionStorage.removeItem('cofreAberto'); // Tira a chave
+                    document.getElementById('appMainContainer').style.display = 'none'; // Esconde os dados
+                    atualizarTelaBloqueio();
+                    document.getElementById('lockScreenOverlay').style.display = 'flex'; // Sobe o vidro
+                }
+            } else if (document.visibilityState === "visible") {
+                if (typeof db !== 'undefined' && db.disableNetwork) { db.disableNetwork().then(() => db.enableNetwork()); }
+                if (document.getElementById('lockScreenOverlay').style.display === 'flex') {
+                    atualizarTelaBloqueio();
+                    setTimeout(() => { usarBiometria(false); }, 400); // Pede a digital
+                }
+            }
+        });
+
+        // 5. Atualiza a foto e o nome do vidro
+        function atualizarTelaBloqueio() {
+            let nomeDono = localStorage.getItem('meuPerfilFixo_GuiaBolso');
+            if (nomeDono && usuarios.length > 0) {
+                let u = usuarios.find(x => x.nome === nomeDono);
+                if (u) {
+                    document.getElementById('lockName').innerText = "Olá, " + u.nome + "!";
+                    document.getElementById('lockAvatar').src = getFoto(u);
+                }
+            }
+        }
+        
         
         function iniciarApp() {
             const cofreRef = db.collection("guiabolso").doc("bancodedados");
@@ -1061,42 +1144,9 @@
                 if (key.includes('financas_premium_')) salvarNaNuvemFirebase();
             };
     
-            // Puxa a foto e o nome do dono do celular pra tela de bloqueio
-        function atualizarTelaBloqueio() {
-            let nomeDono = localStorage.getItem('meuPerfilFixo_GuiaBolso');
-            if (nomeDono && usuarios.length > 0) {
-                let u = usuarios.find(x => x.nome === nomeDono);
-                if (u) {
-                    document.getElementById('lockName').innerText = "Olá, " + u.nome + "!";
-                    document.getElementById('lockAvatar').src = getFoto(u);
-                }
-            }
-        }
 
-        // Tranca o app quando minimizado
-        document.addEventListener("visibilitychange", () => {
-            let temBiometria = localStorage.getItem('biometriaAppId');
-            
-            if (document.visibilityState === "hidden") {
-                // MINIMIZOU: Tranca o cofre e sobe o vidro imediatamente!
-                if (sessaoAtiva && temBiometria) {
-                    sessionStorage.removeItem('cofreAberto'); // 🔒 A CHAVE FOI JOGADA FORA
-                    document.getElementById('appMainContainer').style.display = 'none';
-                    atualizarTelaBloqueio();
-                    document.getElementById('lockScreenOverlay').style.display = 'flex';
-                }
-            } 
-            else if (document.visibilityState === "visible") {
-                // ABRIU DE NOVO: Reconecta a internet
-                db.disableNetwork().then(() => db.enableNetwork());
-                
-                // Puxa a leitura da digital se estiver na tela de bloqueio
-                if (document.getElementById('lockScreenOverlay').style.display === 'flex') {
-                    atualizarTelaBloqueio(); 
-                    setTimeout(() => { usarBiometria(false); }, 400);
-                }
-            }
-        });
+
+        
         }
     
           function salvarNaNuvemFirebase() {
@@ -2634,48 +2684,70 @@
             } else { carousel.innerHTML += `<div class="carousel-card"><h4 style="color: var(--green); margin-bottom: 10px;">✅ Compra Aprovada</h4><p style="font-size: 0.95rem; color: var(--text);">Pode prosseguir! Mesmo no mês mais difícil, você ainda manterá intacta a sua margem de segurança para imprevistos.</p></div>`; }
             document.getElementById('simuladorForm').style.display = 'none'; document.getElementById('simuladorResult').style.display = 'block'; carousel.scrollLeft = 0; setTimeout(atualizarSetas, 100);
             
-            
-            // ==========================================
-    // 🛠️ GESTOS INVISÍVEIS (SWIPE E PRESS)
-    // ==========================================
-    let timerPress; const containerApp = document.querySelector('.app-container');
-    containerApp.addEventListener('touchstart', iniciarPress, {passive: true}); containerApp.addEventListener('touchend', cancelarPress); containerApp.addEventListener('touchmove', cancelarPress); 
-    containerApp.addEventListener('mousedown', iniciarPress); containerApp.addEventListener('mouseup', cancelarPress); containerApp.addEventListener('mousemove', cancelarPress);
-    function iniciarPress(e) { if (e.target.closest('.widget-item') && !e.target.closest('button') && !e.target.closest('input')) { timerPress = setTimeout(() => { if (!document.body.classList.contains('edit-mode')) { toggleEditMode(); if (navigator.vibrate) navigator.vibrate(50); } }, 800); } }
-    function cancelarPress() { clearTimeout(timerPress); }
-    document.addEventListener('click', (e) => { if (document.body.classList.contains('edit-mode')) { if (!e.target.closest('.widget-item') && !e.target.closest('.bottom-nav')) { toggleEditMode(); } } });
-
-    // 👇 Swipe para mudar de mês (Aba Lançamentos e Aba Divisão)
-    let touchStartX = 0; let touchStartY = 0; 
-    const abaLancamentos = document.getElementById('aba-caixa');
-    const abaDivisao = document.getElementById('aba-divisao');
-
-    function handleTouchStart(e) { 
-        touchStartX = e.changedTouches[0].screenX; 
-        touchStartY = e.changedTouches[0].screenY; 
-    }
-    
-    function handleTouchEnd(e) { 
-        let touchEndX = e.changedTouches[0].screenX; 
-        let touchEndY = e.changedTouches[0].screenY; 
-        let deltaX = touchEndX - touchStartX; 
-        let deltaY = touchEndY - touchStartY; 
+          // ==========================================
+        // 🛠️ GESTOS INVISÍVEIS (SWIPE E PRESS)
+        // ==========================================
+        let timerPress; const containerApp = document.querySelector('.app-container');
         
-        // Se o movimento horizontal for maior que o vertical e maior que 50px
-        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) { 
-            if (deltaX > 0) mudarMes(-1); // Deslizou pra direita (volta)
-            else mudarMes(1); // Deslizou pra esquerda (avança)
-        } 
-    }
+        if (containerApp) {
+            containerApp.addEventListener('touchstart', iniciarPress, {passive: true}); 
+            containerApp.addEventListener('touchend', cancelarPress); 
+            containerApp.addEventListener('touchmove', cancelarPress); 
+            containerApp.addEventListener('mousedown', iniciarPress); 
+            containerApp.addEventListener('mouseup', cancelarPress); 
+            containerApp.addEventListener('mousemove', cancelarPress);
+        }
 
-    if (abaLancamentos) {
-        abaLancamentos.addEventListener('touchstart', handleTouchStart, {passive: true});
-        abaLancamentos.addEventListener('touchend', handleTouchEnd, {passive: true});
-    }
-    if (abaDivisao) {
-        abaDivisao.addEventListener('touchstart', handleTouchStart, {passive: true});
-        abaDivisao.addEventListener('touchend', handleTouchEnd, {passive: true});
-    }
+        function iniciarPress(e) { 
+            if (e.target.closest('.widget-item') && !e.target.closest('button') && !e.target.closest('input')) { 
+                timerPress = setTimeout(() => { 
+                    if (!document.body.classList.contains('edit-mode')) { 
+                        toggleEditMode(); if (navigator.vibrate) navigator.vibrate(50); 
+                    } 
+                }, 800); 
+            } 
+        }
+        function cancelarPress() { clearTimeout(timerPress); }
+        
+        document.addEventListener('click', (e) => { 
+            if (document.body.classList.contains('edit-mode')) { 
+                if (!e.target.closest('.widget-item') && !e.target.closest('.bottom-nav')) { toggleEditMode(); } 
+            } 
+        });
+
+        // 👇 SWIPE BLINDADO (Funciona em qualquer celular)
+        let touchStartX = 0; 
+        let touchStartY = 0; 
+
+        document.addEventListener('touchstart', e => { 
+            touchStartX = e.changedTouches[0].screenX; 
+            touchStartY = e.changedTouches[0].screenY; 
+        }, {passive: true});
+        
+        document.addEventListener('touchend', e => { 
+            let touchEndX = e.changedTouches[0].screenX; 
+            let touchEndY = e.changedTouches[0].screenY; 
+            let deltaX = touchEndX - touchStartX; 
+            let deltaY = touchEndY - touchStartY; 
+            
+            // Regra de Ouro: O movimento horizontal tem que ser grande (> 60px) 
+            // e o movimento vertical bem pequeno (< 40px) para não atrapalhar a rolagem da página
+            if (Math.abs(deltaX) > 60 && Math.abs(deltaY) < 40) { 
+                
+                // Verifica se o usuário está na aba de Lançamentos ou de Divisão
+                let abaCaixa = document.getElementById('aba-caixa');
+                let abaDiv = document.getElementById('aba-divisao');
+                
+                let isCaixaAtiva = abaCaixa && abaCaixa.classList.contains('active');
+                let isDivAtiva = abaDiv && abaDiv.classList.contains('active');
+
+                if (isCaixaAtiva || isDivAtiva) {
+                    if (deltaX > 0) mudarMes(-1); // Deslizou pra direita (Volta o mês)
+                    else mudarMes(1);             // Deslizou pra esquerda (Avança o mês)
+                }
+            } 
+        }, {passive: true});  
+    
         }
     
         
@@ -2777,53 +2849,9 @@
             }
         }
     
-        async function usarBiometria(isCadastrando = false) {
-        if (!window.PublicKeyCredential) { 
-            if (isCadastrando) liberarTelaBiometria();
-            return; 
-        }
-        try {
-            let credId = localStorage.getItem('biometriaAppId');
-            
-            if (isCadastrando) {
-                const credential = await navigator.credentials.create({ /* ... seus dados do desafio ... */ });
-                let idArray = Array.from(new Uint8Array(credential.rawId)); 
-                localStorage.setItem('biometriaAppId', JSON.stringify(idArray)); 
-                liberarTelaBiometria(); // SUCESSO NO CADASTRO
-            } else {
-                if (!credId) return;
-                let idArray = new Uint8Array(JSON.parse(credId)); 
-                await navigator.credentials.get({ publicKey: { challenge: gerarDesafio(), allowCredentials: [{ type: "public-key", id: idArray }], userVerification: "required" } }); 
-                liberarTelaBiometria(); // ✅ SUCESSO NA LEITURA: SÓ AQUI ENTRA NO APP
-            }
-        } catch (erro) { 
-            console.log("Biometria cancelada ou falhou.", erro);
-            // 🛑 AQUI ESTÁ O SEGREDO: Se cair no erro (cancelar), NÃO FAZ NADA.
-            // A tela de vidro (lockScreenOverlay) continuará visível, bloqueando o app.
-            showToast("Digital necessária para acessar.");
-        }
-    }
+        
     
-        // ==========================================
-        // 🔓 FUNÇÃO PARA DESTRANCAR O APLICATIVO
-        // ==========================================
-        function liberarTelaBiometria() {
-            // Cria a "chave" na memória temporária
-            sessionStorage.setItem('cofreAberto', 'true');
-            sessaoAtiva = true;
-            
-            // Esconde as telas de bloqueio e mostra o App
-            document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('lockScreenOverlay').style.display = 'none';
-            document.getElementById('appMainContainer').style.display = 'block';
-
-            if (!isAppIniciado) {
-                showToast("⏳ Sincronizando cofre...");
-            } else {
-                // Chama a rotina normal do app (Netflix ou Dashboard)
-                verificarPerfilCelular(); 
-            }
-        }
+       
     
         // ==========================================
         // ⚙️ EVENTOS AUTOMÁTICOS E APP (PWA)
