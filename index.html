@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
     <html lang="pt-br">
     <head>
         <meta charset="UTF-8">
@@ -39,6 +39,11 @@
         </script>
     
         <style>
+        /* 📱 COLOQUE ISSO AQUI: */
+body {
+    overscroll-behavior-x: none; /* Impede o navegador de "voltar página" no swipe */
+    touch-action: pan-y;         /* Garante que o arrastar horizontal seja livre para o app */
+}
         /* 🚫 REMOVER TODAS AS BARRAS DE ROLAGEM GLOBALMENTE */
           * {
               -ms-overflow-style: none !important; /* Esconde no Edge/IE */
@@ -965,44 +970,43 @@
         // ==========================================
         // 🔐 MÓDULO DE SEGURANÇA E ACESSO (BANCO)
         // ==========================================
+       firebase.auth().onAuthStateChanged((user) => {
+    const overlayLogin = document.getElementById('loginOverlay');
+    const lockScreen = document.getElementById('lockScreenOverlay');
+    const appContainer = document.getElementById('appMainContainer');
+    
+    let cofreAberto = sessionStorage.getItem('cofreAberto') === 'true';
+    let temBiometria = localStorage.getItem('biometriaAppId');
 
-        // 1. O Olheiro do Firebase (Inicia o App)
-        firebase.auth().onAuthStateChanged((user) => {
-            const overlayLogin = document.getElementById('loginOverlay');
-            const lockScreen = document.getElementById('lockScreenOverlay');
-            const appContainer = document.getElementById('appMainContainer');
-
-            // Esconde tudo no início
+    if (user) {
+        sessaoAtiva = true;
+        if (cofreAberto) {
+            // ✅ SESSÃO ATIVA (F5): Mata qualquer tela de bloqueio na hora
             if (overlayLogin) overlayLogin.style.display = 'none';
             if (lockScreen) lockScreen.style.display = 'none';
+            appContainer.style.display = 'block';
+            verificarPerfilCelular();
+        } else if (temBiometria) {
+            // 🔒 SESSÃO EXPIRADA: Mostra a Tela de Vidro
+            if (appContainer) appContainer.style.display = 'none'; // Garante que o fundo tá limpo
+            if (overlayLogin) overlayLogin.style.display = 'none';
+            atualizarTelaBloqueio();
+            lockScreen.style.display = 'flex';
+            setTimeout(() => { usarBiometria(false); }, 500);
+        } else {
+            // 🔑 SEM BIOMETRIA: Login por e-mail
             if (appContainer) appContainer.style.display = 'none';
-
-            if (user) {
-                sessaoAtiva = true;
-                let cofreAberto = sessionStorage.getItem('cofreAberto');
-                let temBiometria = localStorage.getItem('biometriaAppId');
-
-                if (cofreAberto === 'true') {
-                    // Já desbloqueou com digital ou senha nesta sessão
-                    if (appContainer) appContainer.style.display = 'block';
-                    verificarPerfilCelular();
-                } else if (temBiometria) {
-                    // Tem digital, mas a sessão expirou: Mostra Vidro Fosco
-                    atualizarTelaBloqueio();
-                    if (lockScreen) lockScreen.style.display = 'flex';
-                    setTimeout(() => { usarBiometria(false); }, 500);
-                } else {
-                    // Logado no Firebase mas sem digital: Exige Login de Senha por segurança
-                    // (Isso evita entrar direto se você sair e entrar de novo)
-                    if (overlayLogin) overlayLogin.style.display = 'flex';
-                }
-            } else {
-                // Deslogado: Tela de e-mail e senha
-                sessaoAtiva = false;
-                sessionStorage.removeItem('cofreAberto');
-                if (overlayLogin) overlayLogin.style.display = 'flex';
-            }
-        });
+            overlayLogin.style.display = 'flex';
+        }
+    } else {
+        // ❌ LOGOUT
+        sessaoAtiva = false;
+        sessionStorage.removeItem('cofreAberto');
+        if (appContainer) appContainer.style.display = 'none';
+        overlayLogin.style.display = 'flex';
+        lockScreen.style.display = 'none';
+    }
+});
 
         // 2. Destrancar o App (Sucesso)
         function liberarTelaBiometria() {
@@ -1178,9 +1182,12 @@
         // ==========================================
         // 🍿 SISTEMA DE PERFIL (NETFLIX + SETUP INICIAL)
         // ==========================================
-        function verificarPerfilCelular() {
+          function verificarPerfilCelular() {
             if (!sessaoAtiva || !isAppIniciado) return; 
-    
+
+            // 🛡️ A TRAVA DE SEGURANÇA: Se o cofre não estiver aberto, não mostra o app!
+            if (sessionStorage.getItem('cofreAberto') !== 'true') return;
+
             if (usuarios.length === 0) {
                 document.getElementById('netflixOverlay').style.display = 'none';
                 document.getElementById('setupInicialOverlay').style.display = 'flex';
@@ -2697,12 +2704,18 @@
                 if (mesIdealParaComprar) { achouSolucao = true; carousel.innerHTML += `<div class="carousel-card"><h4 style="color: #8b5cf6; margin-bottom: 10px;">⏳ Opção 2: Adiar a Compra</h4><p style="font-size: 0.95rem; color: var(--text);">O Oráculo viu o futuro! Algumas das suas dívidas atuais vão acabar e liberar espaço na sua renda.</p><div style="margin-top: 15px; padding: 10px; background: rgba(139, 92, 246, 0.1); border-radius: 8px;"><strong style="font-size: 1.1rem; color: #8b5cf6;">Compre em ${mesIdealParaComprar}</strong><br><span style="font-size: 0.9rem; color: var(--text);">Se você esperar até lá, essa mesma parcela em ${par}x caberá perfeitamente na sua renda.</span></div></div>`; }
                 if (!achouSolucao) { carousel.innerHTML += `<div class="carousel-card"><h4 style="color: var(--red); margin-bottom: 10px;">🛑 Compra Inviável a Curto Prazo</h4><p style="font-size: 0.95rem; color: var(--text);">O sistema analisou os próximos 2 anos e não encontrou espaço seguro. Assumir isso agora te levará à falência. Aumente a renda ou quite dívidas antecipadamente.</p></div>`; }
             } else { carousel.innerHTML += `<div class="carousel-card"><h4 style="color: var(--green); margin-bottom: 10px;">✅ Compra Aprovada</h4><p style="font-size: 0.95rem; color: var(--text);">Pode prosseguir! Mesmo no mês mais difícil, você ainda manterá intacta a sua margem de segurança para imprevistos.</p></div>`; }
-            document.getElementById('simuladorForm').style.display = 'none'; document.getElementById('simuladorResult').style.display = 'block'; carousel.scrollLeft = 0; setTimeout(atualizarSetas, 100);
-            
-          // ==========================================
+               
+              document.getElementById('simuladorForm').style.display = 'none'; 
+            document.getElementById('simuladorResult').style.display = 'block'; 
+            carousel.scrollLeft = 0; 
+            setTimeout(atualizarSetas, 100);
+        } // 🛑 ESSA CHAVE FECHA O SIMULADOR (Ela estava no lugar errado antes!)
+
+        // ==========================================
         // 🛠️ GESTOS INVISÍVEIS (SWIPE E PRESS)
         // ==========================================
-        let timerPress; const containerApp = document.querySelector('.app-container');
+        let timerPress; 
+        const containerApp = document.querySelector('.app-container');
         
         if (containerApp) {
             containerApp.addEventListener('touchstart', iniciarPress, {passive: true}); 
@@ -2717,54 +2730,61 @@
             if (e.target.closest('.widget-item') && !e.target.closest('button') && !e.target.closest('input')) { 
                 timerPress = setTimeout(() => { 
                     if (!document.body.classList.contains('edit-mode')) { 
-                        toggleEditMode(); if (navigator.vibrate) navigator.vibrate(50); 
+                        toggleEditMode(); 
+                        if (navigator.vibrate) navigator.vibrate(50); 
                     } 
                 }, 800); 
             } 
         }
+
         function cancelarPress() { clearTimeout(timerPress); }
         
         document.addEventListener('click', (e) => { 
             if (document.body.classList.contains('edit-mode')) { 
-                if (!e.target.closest('.widget-item') && !e.target.closest('.bottom-nav')) { toggleEditMode(); } 
+                if (!e.target.closest('.widget-item') && !e.target.closest('.bottom-nav')) { 
+                    toggleEditMode(); 
+                } 
             } 
         });
 
-        // 👇 SWIPE BLINDADO (Funciona em qualquer celular)
-         // 🚀 GESTO DE ARRASTAR GLOBAL (Muda o mês em qualquer tela)
-        let touchStartX = 0; 
-        let touchStartY = 0; 
+        // 🚀 SENSOR DE ARRASTAR GLOBAL (Livre e Sensível)
+        let xDown = null;
+        let yDown = null;
 
-        document.addEventListener('touchstart', e => { 
-            touchStartX = e.changedTouches[0].screenX; 
-            touchStartY = e.changedTouches[0].screenY; 
+        document.addEventListener('touchstart', (evt) => {
+            xDown = evt.touches[0].clientX;
+            yDown = evt.touches[0].clientY;
         }, {passive: true});
-        
-        document.addEventListener('touchend', e => { 
-            let touchEndX = e.changedTouches[0].screenX; 
-            let touchEndY = e.changedTouches[0].screenY; 
-            let deltaX = touchEndX - touchStartX; 
-            let deltaY = touchEndY - touchStartY; 
-            
-            // Sensibilidade do movimento horizontal e trava vertical
-            if (Math.abs(deltaX) > 70 && Math.abs(deltaY) < 50) { 
-                if (deltaX > 0) {
-                    mudarMes(-1); // Direita -> Mês Anterior
-                } else {
-                    mudarMes(1);  // Esquerda -> Próximo Mês
+
+        document.addEventListener('touchmove', (evt) => {
+            if (!xDown || !yDown) return;
+
+            let xUp = evt.touches[0].clientX;
+            let yUp = evt.touches[0].clientY;
+            let xDiff = xDown - xUp;
+            let yDiff = yDown - yUp;
+
+            // Se o movimento for na horizontal (deslizou pros lados)
+            if (Math.abs(xDiff) > Math.abs(yDiff)) {
+                // E for um arraste longo (> 60px)
+                if (Math.abs(xDiff) > 60) { 
+                    // Se algum modal estiver aberto (ex: Lançar), não muda o mês!
+                    if (document.querySelector('.modal-overlay.active')) return;
+
+                    if (xDiff > 0) mudarMes(1);  // Deslizou para ESQUERDA (Avança o Mês)
+                    else mudarMes(-1);           // Deslizou para DIREITA (Volta o Mês)
+                    
+                    // Reseta para não pular 2 meses de uma vez
+                    xDown = null; 
+                    yDown = null; 
+                    if (navigator.vibrate) navigator.vibrate(10);
                 }
-                // Feedback tátil leve (se o celular suportar)
-                if (navigator.vibrate) navigator.vibrate(10);
-            } 
+            }
         }, {passive: true});
-    
-        }
-    
-        
-    
+
         // =======================================================
-        // 🚀 INICIALIZAÇÃO FINAL, LOGIN E RESET
-        // =======================================================
+        // 🚀 INICIALIZAÇÃO FINAL, LOGIN E RESET 
+       // =======================================================
         iniciarApp();
     
         function verificarAcesso() {
