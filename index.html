@@ -962,45 +962,49 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         
+        // ==========================================
+        // 🔐 GERENCIADOR DE SESSÃO DO FIREBASE
+        // ==========================================
         firebase.auth().onAuthStateChanged((user) => {
-        const overlayLogin = document.getElementById('loginOverlay');
-        const lockScreen = document.getElementById('lockScreenOverlay');
-        const appContainer = document.getElementById('appMainContainer');
+            const overlayLogin = document.getElementById('loginOverlay');
+            const lockScreen = document.getElementById('lockScreenOverlay');
+            const appContainer = document.getElementById('appMainContainer');
 
-        // Reset inicial: Esconde tudo para decidir o que mostrar
-        if (overlayLogin) overlayLogin.style.display = 'none';
-        if (lockScreen) lockScreen.style.display = 'none';
-        if (appContainer) appContainer.style.display = 'none';
+            // Começa escondendo tudo para não piscar tela errada
+            if (overlayLogin) overlayLogin.style.display = 'none';
+            if (lockScreen) lockScreen.style.display = 'none';
+            if (appContainer) appContainer.style.display = 'none';
 
-        if (user) {
-            sessaoAtiva = true;
-            let cofreAberto = sessionStorage.getItem('cofreAberto');
-            let temBiometria = localStorage.getItem('biometriaAppId');
+            if (user) {
+                sessaoAtiva = true;
+                let cofreAberto = sessionStorage.getItem('cofreAberto');
+                let temBiometria = localStorage.getItem('biometriaAppId');
 
-            if (cofreAberto === 'true') {
-                // ✅ JÁ DESBLOQUEOU NESTA SESSÃO: Entra direto no app
-                appContainer.style.display = 'block';
-                verificarPerfilCelular();
-            } 
-            else if (temBiometria) {
-                // 🔒 LOGADO, MAS COFRE TRANCADO: Mostra a TELA DE VIDRO (Estilo Banco)
-                atualizarTelaBloqueio(); 
-                lockScreen.style.display = 'flex';
-                
-                // Tenta subir o sensor de digital automaticamente
-                setTimeout(() => { usarBiometria(false); }, 500);
-            } 
-            else {
-                // Caso raro: Logado mas sem biometria configurada (ex: novo celular)
-                // Mostra o login para ele se re-autenticar e cadastrar a digital
-                overlayLogin.style.display = 'flex';
+                if (cofreAberto === 'true') {
+                    // ✅ Já passou a digital nesta sessão: Entra no App
+                    if (appContainer) appContainer.style.display = 'block';
+                    verificarPerfilCelular();
+                } 
+                else if (temBiometria) {
+                    // 🔒 Logado, mas cofre trancado: TELA DE VIDRO
+                    atualizarTelaBloqueio(); 
+                    if (lockScreen) lockScreen.style.display = 'flex';
+                    // Chama a digital sozinha
+                    setTimeout(() => { usarBiometria(false); }, 500);
+                } 
+                else {
+                    // ⚠️ Logado, mas não quis usar biometria: Entra direto
+                    sessionStorage.setItem('cofreAberto', 'true');
+                    if (appContainer) appContainer.style.display = 'block';
+                    verificarPerfilCelular();
+                }
+            } else {
+                // ❌ Deslogado total: Tela de Email e Senha
+                sessaoAtiva = false;
+                sessionStorage.removeItem('cofreAberto');
+                if (overlayLogin) overlayLogin.style.display = 'flex';
             }
-        } else {
-            // ❌ DESLOGADO: Mostra tela de E-mail e Senha
-            sessaoAtiva = false;
-            overlayLogin.style.display = 'flex';
-        }
-    });
+        });
         
         function iniciarApp() {
             const cofreRef = db.collection("guiabolso").doc("bancodedados");
@@ -1069,23 +1073,26 @@
             }
         }
 
+        // Tranca o app quando minimizado
         document.addEventListener("visibilitychange", () => {
             let temBiometria = localStorage.getItem('biometriaAppId');
             
             if (document.visibilityState === "hidden") {
-                // O app foi MINIMIZADO. Prepara a tela de bloqueio com sua foto e sobe ela!
+                // MINIMIZOU: Tranca o cofre e sobe o vidro imediatamente!
                 if (sessaoAtiva && temBiometria) {
+                    sessionStorage.removeItem('cofreAberto'); // 🔒 A CHAVE FOI JOGADA FORA
+                    document.getElementById('appMainContainer').style.display = 'none';
                     atualizarTelaBloqueio();
                     document.getElementById('lockScreenOverlay').style.display = 'flex';
                 }
             } 
             else if (document.visibilityState === "visible") {
-                // O app foi ABERTO DE NOVO. Reconecta a internet.
+                // ABRIU DE NOVO: Reconecta a internet
                 db.disableNetwork().then(() => db.enableNetwork());
                 
-                // Se a tela premium estiver lá, puxa a biometria automaticamente!
+                // Puxa a leitura da digital se estiver na tela de bloqueio
                 if (document.getElementById('lockScreenOverlay').style.display === 'flex') {
-                    atualizarTelaBloqueio(); // Garante que a foto tá certa
+                    atualizarTelaBloqueio(); 
                     setTimeout(() => { usarBiometria(false); }, 400);
                 }
             }
@@ -2797,20 +2804,23 @@
         }
     }
     
+        // ==========================================
+        // 🔓 FUNÇÃO PARA DESTRANCAR O APLICATIVO
+        // ==========================================
         function liberarTelaBiometria() {
-            sessionStorage.setItem('cofreAberto', 'true'); 
+            // Cria a "chave" na memória temporária
+            sessionStorage.setItem('cofreAberto', 'true');
             sessaoAtiva = true;
             
-            // Esconde a tela preta inicial (se estiver lá)
+            // Esconde as telas de bloqueio e mostra o App
             document.getElementById('loginOverlay').style.display = 'none';
-            
-            // Esconde a tela roxa estilo Nubank (se estiver lá)
-            let lockScreen = document.getElementById('lockScreenOverlay');
-            if(lockScreen) lockScreen.style.display = 'none';
-            
+            document.getElementById('lockScreenOverlay').style.display = 'none';
+            document.getElementById('appMainContainer').style.display = 'block';
+
             if (!isAppIniciado) {
                 showToast("⏳ Sincronizando cofre...");
             } else {
+                // Chama a rotina normal do app (Netflix ou Dashboard)
                 verificarPerfilCelular(); 
             }
         }
