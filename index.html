@@ -39,6 +39,41 @@
         </script>
     
         <style>
+        /* 🎛️ BOTÕES DE DIVISÃO DO SIMULADOR */
+        .sim-divisao-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 5px;
+            width: 100%;
+        }
+        .sim-divisao-btn {
+            background: var(--input-bg);
+            border: 2px solid transparent;
+            border-radius: 14px;
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: var(--secondary-text);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+        .sim-divisao-btn:hover {
+            transform: translateY(-2px);
+            border-color: rgba(92, 32, 146, 0.3);
+        }
+        .sim-divisao-btn.active {
+            background: rgba(92, 32, 146, 0.08);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .sim-divisao-btn svg { width: 26px; height: 26px; stroke: currentColor; }
+        .sim-divisao-btn span { font-size: 0.75rem; font-weight: 600; line-height: 1.2; }
+        
         /* 📱 COLOQUE ISSO AQUI: */
 body {
     overscroll-behavior-x: none; /* Impede o navegador de "voltar página" no swipe */
@@ -719,31 +754,133 @@ body {
         </div>
     
         <div class="modal-overlay" id="modalTransacao">
-            <div class="modal-content">
-                <div class="modal-header"><h3 id="modalTitleTx">Novo Lançamento</h3><button class="close-btn" onclick="fecharModalTransacao()">×</button></div>
-                <div class="form-group"><label class="form-label">Tipo de Movimentação</label><select id="txTipo" class="form-control"><option value="despesa">Saída (Despesa)</option><option value="receita">Entrada (Receita)</option></select></div>
-                <div class="form-group"><label class="form-label">Descrição</label><input type="text" id="txDescricao" class="form-control" placeholder="Ex: Mercado, Netflix, Tênis..."></div>
-                <div class="form-group"><label class="form-label" id="labelValorTx">Valor Total</label><input type="text" id="txValor" class="form-control" placeholder="R$ 0,00" style="font-size: 1.2rem; font-weight: bold; color: var(--primary);"></div>
-                <div class="form-group"><label class="form-label">Repetição</label><div class="segmented-control" id="boxPulas"><button type="button" class="segment-btn active" onclick="selecionarRepeticao('unica', this)">Única</button><button type="button" class="segment-btn" onclick="selecionarRepeticao('parcelada', this)">Parcelada</button><button type="button" class="segment-btn" onclick="selecionarRepeticao('fixa', this)">Fixa</button></div><input type="hidden" id="txRepeticao" value="unica"></div>
-                <div class="form-group" id="boxParcelas" style="display: none; animation: fadeIn 0.3s;"><label class="form-label">Quantidade de Parcelas</label><input type="number" id="txParcelas" class="form-control" placeholder="Ex: 10" min="2"></div>
-                <div class="form-group"><label class="form-label">Categoria (Descontar de onde?)</label><select id="txCategoria" class="form-control"><optgroup label="Despesas Fixas da Casa"><option value="Casa - Mercado">🛒 Mercado / Alimentação</option><option value="Casa - Contas">💡 Contas (Água, Luz, Internet)</option><option value="Casa - Moradia">🏠 Aluguel / Condomínio</option><option value="Casa - Outros">📦 Outros (Casa)</option></optgroup><optgroup label="Despesas Pessoais" id="optgroupPessoais"></optgroup></select></div>
+            <div class="modal-content" style="max-width: 420px; padding: 25px;">
+                <div class="modal-header" style="margin-bottom: 15px;"><h3 id="modalTitleTx">Novo Lançamento</h3><button class="close-btn" onclick="fecharModalTransacao()">×</button></div>
                 
-                <div class="form-group" id="boxFormaPagamento" style="display: none;">
-                  <label class="form-label" id="labelFormaPagamento" style="display: flex; align-items: center; gap: 6px;">
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                          <line x1="1" y1="10" x2="23" y2="10"></line>
-                      </svg>
-                      Cartão de Crédito
-                  </label>
-                  <select id="txFormaPagamento" class="form-control" onchange="document.getElementById('labelDataCompra').innerText = this.value === 'padrao' ? 'Data de Pagamento' : 'Data da Compra'; atualizarInterfacePagamento();">
-                      <option value="padrao">Pagamento sem cartão</option>
-                  </select>
-              </div>
+                <div style="display: grid; grid-template-columns: 1.2fr 1.8fr; gap: 12px; margin-bottom: 12px;">
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">Tipo</label>
+                        <select id="txTipo" class="form-control" style="padding: 10px; font-weight: 600;">
+                            <option value="despesa">Saída (-)</option>
+                            <option value="receita">Entrada (+)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">Repetição</label>
+                        <div class="segmented-control" id="boxPulas" style="padding: 3px;">
+                            <button type="button" class="segment-btn active" onclick="selecionarRepeticao('unica', this)" style="padding: 6px 2px;">Única</button>
+                            <button type="button" class="segment-btn" onclick="selecionarRepeticao('parcelada', this)" style="padding: 6px 2px;">Parcelada</button>
+                            <button type="button" class="segment-btn" onclick="selecionarRepeticao('fixa', this)" style="padding: 6px 2px;">Fixa</button>
+                        </div>
+                        <input type="hidden" id="txRepeticao" value="unica">
+                    </div>
+                </div>
+
+                <div class="form-group" id="boxParcelas" style="display: none; animation: fadeIn 0.3s; margin-bottom: 12px;">
+                    <label class="form-label">Qtd. Parcelas</label>
+                    <input type="number" id="txParcelas" class="form-control" placeholder="Ex: 10" min="2" style="padding: 10px;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label">Descrição</label>
+                    <input type="text" id="txDescricao" class="form-control" placeholder="Ex: Mercado, Netflix, Academia..." style="padding: 10px;">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-bottom: 12px;">
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" id="labelValorTx">Valor (Total)</label>
+                        <input type="text" id="txValor" class="form-control" placeholder="R$ 0,00" style="font-size: 1.2rem; font-weight: bold; color: var(--primary); padding: 10px;">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" id="labelDataCompra">Data</label>
+                        <input type="date" id="txData" class="form-control" style="padding: 10px; font-size: 0.9rem;">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label">Categoria (Descontar de onde?)</label>
+                    <select id="txCategoria" class="form-control" style="padding: 10px;">
+                        <optgroup label="Despesas Fixas da Casa">
+                            <option value="Casa - Mercado">🛒 Mercado / Alimentação</option>
+                            <option value="Casa - Contas">💡 Contas (Água, Luz, Net)</option>
+                            <option value="Casa - Moradia">🏠 Aluguel / Condomínio</option>
+                            <option value="Casa - Outros">📦 Outros (Casa)</option>
+                        </optgroup>
+                        <optgroup label="Despesas Pessoais" id="optgroupPessoais"></optgroup>
+                    </select>
+                </div>
                 
-  
-                <div class="form-group"><label class="form-label" id="labelDataCompra">Data de Pagamento</label><input type="date" id="txData" class="form-control"></div>
-                <div class="modal-actions"><button class="btn-save" style="width: 100%;" onclick="salvarTransacao()">Salvar Lançamento</button></div>
+                <div class="form-group" id="boxFormaPagamento" style="display: none; margin-bottom: 10px;">
+                    <label class="form-label" id="labelFormaPagamento" style="display: flex; align-items: center; gap: 6px;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                        Cartão de Crédito
+                    </label>
+                    <select id="txFormaPagamento" class="form-control" onchange="document.getElementById('labelDataCompra').innerText = this.value === 'padrao' ? 'Data de Pagamento' : 'Data da Compra'; atualizarInterfacePagamento();" style="padding: 10px;">
+                        <option value="padrao">Pagamento sem cartão</option>
+                    </select>
+                </div>
+
+                <div class="modal-actions" style="margin-top: 15px;">
+                    <button class="btn-save" style="width: 100%; padding: 12px; font-size: 1.05rem;" onclick="salvarTransacao()">Salvar Lançamento</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="modalSimulador">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3 id="modalTitleSimulador" style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></svg>
+                        Simulador Inteligente
+                    </h3>
+                    <button class="close-btn" onclick="fecharModalSimulador()">×</button>
+                </div>
+                <div id="simuladorForm">
+                    <p style="font-size: 0.9rem; color: var(--secondary-text); margin-bottom: 15px;">Descubra se a nova dívida cabe no seu bolso.</p>
+                    
+                    <div class="form-group"><label class="form-label">O que você quer comprar?</label><input type="text" id="simDescricao" class="form-control" placeholder="Ex: PlayStation 5" style="padding: 10px;"></div>
+                    
+                    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 10px; margin-bottom: 12px;">
+                        <div class="form-group" style="margin:0;"><label class="form-label">Valor Total</label><input type="text" id="simValor" class="form-control" placeholder="R$ 0,00" style="padding: 10px; font-weight: bold; color: var(--primary);"></div>
+                        <div class="form-group" style="margin:0;"><label class="form-label">Parcelas?</label><input type="number" id="simParcelas" class="form-control" value="10" min="1" style="padding: 10px;"></div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label class="form-label">Quem vai pagar a parcela?</label>
+                        <select id="simPessoa" class="form-control" style="padding: 10px;"></select>
+                    </div>
+
+                    <div class="form-group" id="boxSimRegraDivisao" style="display: none; animation: fadeIn 0.3s; margin-bottom: 15px;">
+                        <label class="form-label" style="margin-bottom: 0;">Como vocês dividem as contas da casa?</label>
+                        <input type="hidden" id="simRegraDivisao" value="solidariedade">
+                        <div class="sim-divisao-grid">
+                            <div class="sim-divisao-btn active" id="btnDivSolidariedade" onclick="selecionarRegraSim('solidariedade')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                                <span>Saldos<br>Iguais</span>
+                            </div>
+                            <div class="sim-divisao-btn" id="btnDivProporcional" onclick="selecionarRegraSim('proporcional')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
+                                <span>Por<br>Renda</span>
+                            </div>
+                            <div class="sim-divisao-btn" id="btnDiv5050" onclick="selecionarRegraSim('5050')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"></path><rect x="3" y="9" width="18" height="6" rx="2"></rect></svg>
+                                <span>Meio a<br>Meio</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions" style="margin-top: 20px;"><button class="btn-save" style="width: 100%; padding: 12px; font-size: 1.05rem;" onclick="rodarSimulacao()">Analisar Impacto ➔</button></div>
+                </div>
+                
+                <div id="simuladorResult" style="display: none;">
+                    <p style="font-size: 0.85rem; color: var(--secondary-text); text-align: center; margin-bottom: 10px;">Veja os detalhes abaixo 👇</p>
+                    <div class="carousel-wrapper">
+                        <button class="carousel-arrow left-arrow" onclick="rolarCarrossel(-1)" id="btnSetaEsq" style="display: none;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+                        <div class="carousel-container" id="simuladorCarousel" onscroll="atualizarSetas()"></div>
+                        <button class="carousel-arrow right-arrow" onclick="rolarCarrossel(1)" id="btnSetaDir"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+                    </div>
+                    <div class="modal-actions" style="margin-top: 15px;"><button class="btn-delete" style="display: block; flex: 1; background: var(--input-bg); color: var(--text);" onclick="voltarSimulador()">Refazer Simulação</button></div>
+                </div>
             </div>
         </div>
     
@@ -762,7 +899,7 @@ body {
                     <p style="font-size: 0.9rem; color: var(--secondary-text); margin-bottom: 15px;">Descubra se a nova dívida cabe no seu bolso.</p>
                     <div class="form-group"><label class="form-label">O que você quer comprar?</label><input type="text" id="simDescricao" class="form-control" placeholder="Ex: PlayStation 5"></div>
                     <div style="display: flex; gap: 10px; margin-bottom: 12px;"><div style="flex: 2;"><label class="form-label">Valor Total</label><input type="text" id="simValor" class="form-control" placeholder="R$ 0,00"></div><div style="flex: 1;"><label class="form-label">Em quantas vezes?</label><input type="number" id="simParcelas" class="form-control" value="10" min="1"></div></div>
-                    <div class="form-group"><label class="form-label">Quem vai pagar?</label><select id="simPessoa" class="form-control"></select></div>
+                    <div class="form-group"><label class="form-label">Quem vai pagar a nova parcela?</label><select id="simPessoa" class="form-control"></select></div> <div class="form-group" id="boxSimRegraDivisao" style="display: none; animation: fadeIn 0.3s;"><label class="form-label">Como vocês dividem as contas da Casa?</label><select id="simRegraDivisao" class="form-control"><option value="solidariedade">Solidariedade Extrema (Saldos iguais)</option><option value="proporcional">Proporcional à Renda</option><option value="5050">Meio a Meio (50/50)</option></select></div>
                     <div class="modal-actions" style="margin-top: 20px;"><button class="btn-save" style="width: 100%;" onclick="rodarSimulacao()">Analisar Impacto</button></div>
                 </div>
                 <div id="simuladorResult" style="display: none;">
@@ -1080,8 +1217,6 @@ body {
         document.addEventListener("visibilitychange", () => {
             let temBiometria = localStorage.getItem('biometriaAppId');
             if (document.visibilityState === "hidden") {
-                // MINIMIZOU: Sobe o vidro, mas NÃO APAGA a chave do sessionStorage
-                // Assim, se for só um F5 (Refresh), o app lembra de você!
                 if (sessaoAtiva && temBiometria) {
                     document.getElementById('appMainContainer').style.display = 'none'; 
                     atualizarTelaBloqueio();
@@ -1091,7 +1226,7 @@ body {
                 if (typeof db !== 'undefined' && db.disableNetwork) { db.disableNetwork().then(() => db.enableNetwork()); }
                 if (document.getElementById('lockScreenOverlay').style.display === 'flex') {
                     atualizarTelaBloqueio();
-                    setTimeout(() => { usarBiometria(false); }, 400); 
+                    setTimeout(() => { usarBiometria(false); }, 50); 
                 }
             }
         });
@@ -1816,7 +1951,7 @@ body {
           editTxIndex = idx; 
           
           let selectPag = document.getElementById('txFormaPagamento');
-          selectPag.innerHTML = '<option value="padrao">Não usar cartão</option>';
+          selectPag.innerHTML = '<option value="padrao">Outras Formas De Pagamento</option>';
           
           let temCartao = false;
           usuarios.forEach((u, uIdx) => {
@@ -2634,7 +2769,7 @@ body {
         function toggleEmojiGrid() { const grid = document.getElementById('emojiGridBox'); grid.style.display = grid.style.display === 'none' ? 'grid' : 'none'; }
         function selecionarEmojiProj(emoji) { document.getElementById('btnEmojiSelector').innerText = emoji; document.getElementById('projIcone').value = emoji; document.getElementById('emojiGridBox').style.display = 'none'; }
     
-        function abrirModalSimulador() { const sel = document.getElementById('simPessoa'); sel.innerHTML = '<option value="CASA">🏠 Despesa da Casa (Todos)</option>'; usuarios.forEach(u => sel.innerHTML += `<option value="${u.nome}">👤 Pessoal - ${u.nome}</option>`); document.getElementById('simDescricao').value = ''; document.getElementById('simValor').value = ''; document.getElementById('simParcelas').value = '10'; document.getElementById('simuladorForm').style.display = 'block'; document.getElementById('simuladorResult').style.display = 'none'; document.getElementById('modalSimulador').classList.add('active'); }
+        function abrirModalSimulador() { const sel = document.getElementById('simPessoa'); sel.innerHTML = '<option value="CASA">🏠 Despesa da Casa (Todos juntos)</option>'; usuarios.forEach(u => sel.innerHTML += `<option value="${u.nome}">👤 Pessoal - ${u.nome}</option>`); const boxRegra = document.getElementById('boxSimRegraDivisao'); sel.onchange = () => { if(boxRegra) boxRegra.style.display = sel.value === 'CASA' ? 'none' : 'block'; }; document.getElementById('simDescricao').value = ''; document.getElementById('simValor').value = ''; document.getElementById('simParcelas').value = '10'; if(document.getElementById('simRegraDivisao')) document.getElementById('simRegraDivisao').value = 'solidariedade'; document.getElementById('simuladorForm').style.display = 'block'; document.getElementById('simuladorResult').style.display = 'none'; document.getElementById('modalSimulador').classList.add('active'); sel.onchange(); }
         function fecharModalSimulador() { document.getElementById('modalSimulador').classList.remove('active'); }
         function voltarSimulador() { document.getElementById('simuladorForm').style.display = 'block'; document.getElementById('simuladorResult').style.display = 'none'; }
         
@@ -2642,44 +2777,178 @@ body {
         function atualizarSetas() { const carousel = document.getElementById('simuladorCarousel'); const btnEsq = document.getElementById('btnSetaEsq'); const btnDir = document.getElementById('btnSetaDir'); if(!carousel || !btnEsq || !btnDir) return; btnEsq.style.display = carousel.scrollLeft <= 5 ? 'none' : 'flex'; let chegouNoFim = Math.ceil(carousel.scrollLeft + carousel.clientWidth) >= carousel.scrollWidth - 5; btnDir.style.display = chegouNoFim ? 'none' : 'flex'; }
     
         function rodarSimulacao() {
-            let vTotal = parseMoeda(document.getElementById('simValor').value); let par = parseInt(document.getElementById('simParcelas').value); let nPessoa = document.getElementById('simPessoa').value;
-            if (vTotal <= 0 || isNaN(par) || par < 1) { showToast("Preencha o valor e as parcelas."); return; } if (usuarios.length === 0) { showToast("Cadastre integrantes primeiro!"); return; }
-            
-            let renda = 0; if (nPessoa === "CASA") { renda = usuarios.reduce((s, u) => s + u.renda, 0); } else { let user = usuarios.find(u => u.nome === nPessoa); if(!user) return; renda = user.renda; }
-            let vParcela = vTotal / par; let dtBase = new Date(); let simMeses = [];
-    
-            for(let i = 0; i < par; i++) {
-                let mAtual = new Date(dtBase.getFullYear(), dtBase.getMonth() + i, 1); let m = mAtual.getMonth(); let a = mAtual.getFullYear(); let gastoExistente = 0;
-                transacoes.forEach(tx => { let [tA, tM] = tx.data.split('-').map(Number); if (tA === a && (tM - 1) === m && tx.tipo === 'despesa') { if (nPessoa === "CASA") { gastoExistente += tx.valor; } else if (tx.categoria === `Pessoal - ${nPessoa}`) { gastoExistente += tx.valor; } } });
-                let sLivreFuturo = renda - gastoExistente; let sComCompra = sLivreFuturo - vParcela; simMeses.push({ mesTexto: formatarMesAno(mAtual), saldoNormal: sLivreFuturo, saldoApos: sComCompra });
+            let vTotal = parseMoeda(document.getElementById('simValor').value);
+            let par = parseInt(document.getElementById('simParcelas').value);
+            let nPessoa = document.getElementById('simPessoa').value;
+            let regraDivisao = document.getElementById('simRegraDivisao') ? document.getElementById('simRegraDivisao').value : 'solidariedade';
+
+            if (vTotal <= 0 || isNaN(par) || par < 1) { 
+                showToast("Preencha o valor e as parcelas."); 
+                return; 
+            } 
+            if (usuarios.length === 0) { 
+                showToast("Cadastre integrantes primeiro!"); 
+                return; 
             }
-    
-            let piorMes = simMeses.reduce((min, atual) => (atual.saldoApos < min.saldoApos) ? atual : min, simMeses[0]); let carousel = document.getElementById('simuladorCarousel'); carousel.innerHTML = '';
-            let saldoImediato = simMeses[0].saldoApos; let txtSaldoImediato = saldoImediato >= 0 ? `<strong style="font-size: 1.2rem; color: var(--green);">${saldoImediato.toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong>` : `<strong style="font-size: 1.2rem; color: var(--red);">Saldo Devedor:  ${Math.abs(saldoImediato).toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong>`;
-            carousel.innerHTML += `<div class="carousel-card"><h4 style="color: var(--primary); margin-bottom: 10px;">📉 Impacto Imediato</h4><p style="font-size: 0.95rem; color: var(--text);">A parcela de <strong>${vParcela.toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong> compromete <strong>${((vParcela/renda)*100).toFixed(0)}%</strong> da renda livre mensal (${nPessoa === 'CASA' ? 'da Casa' : 'de ' + nPessoa}).</p><div style="margin-top: 15px; padding: 10px; background: rgba(92, 32, 146, 0.1); border-radius: 8px;"><span style="font-size: 0.85rem; color: var(--secondary-text);">Saldo após a primeira parcela:</span><br>${txtSaldoImediato}</div></div>`;
-            let textoSaldoGargalo = piorMes.saldoApos >= 0 ? `o saldo livre cairá para <strong>${piorMes.saldoApos.toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong>.` : `vai faltar dinheiro! Você ficará <strong>devendo ${Math.abs(piorMes.saldoApos).toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong>.`;
-            carousel.innerHTML += `<div class="carousel-card"><h4 style="color: ${piorMes.saldoApos < 0 ? 'var(--red)' : '#f59e0b'}; margin-bottom: 10px;">⚠️ Mês Crítico</h4><p style="font-size: 0.95rem; color: var(--text);">O seu limite será testado em <strong>${piorMes.mesTexto}</strong>.</p><p style="font-size: 0.9rem; color: var(--secondary-text); margin-top: 10px;">Somando as dívidas já previstas com essa nova, ${textoSaldoGargalo}</p></div>`;
-    
-            let margemSeguranca = renda * 0.15; let isSafeNow = piorMes.saldoApos >= margemSeguranca;
+
+            let renda = 0; 
+            if (nPessoa === "CASA") { 
+                renda = usuarios.reduce((s, u) => s + u.renda, 0); 
+            } else { 
+                let user = usuarios.find(u => u.nome === nPessoa); 
+                if(!user) return; 
+                renda = user.renda; 
+            }
+
+            let vParcela = vTotal / par; 
+            let dtBase = new Date(); 
+            let simMeses = [];
+
+            // 1️⃣ FAZ A VIAGEM NO TEMPO (Mês a Mês)
+            for(let i = 0; i < par; i++) {
+                let mAtual = new Date(dtBase.getFullYear(), dtBase.getMonth() + i, 1); 
+                let m = mAtual.getMonth(); 
+                let a = mAtual.getFullYear(); 
+                
+                let meuGastoPessoal = 0; 
+                let outroGastoPessoal = 0; 
+                let gCasaEx = 0; 
+                let gastoExistente = 0;
+
+                // Varre o banco procurando contas no futuro
+                transacoes.forEach(tx => { 
+                    let [tA, tM] = tx.data.split('-').map(Number); 
+                    if (tA === a && (tM - 1) === m && tx.tipo === 'despesa') { 
+                        if (nPessoa === "CASA") { 
+                            gastoExistente += tx.valor; 
+                        } else { 
+                            if (tx.categoria === `Pessoal - ${nPessoa}`) meuGastoPessoal += tx.valor; 
+                            else if (tx.categoria.startsWith('Pessoal - ')) outroGastoPessoal += tx.valor;
+                            else if (tx.categoria.startsWith('Casa')) gCasaEx += tx.valor; 
+                        } 
+                    } 
+                });
+
+                // A MATEMÁTICA INTELIGENTE DA DIVISÃO
+                if (nPessoa !== "CASA" && usuarios.length >= 2) {
+                    let eu = usuarios.find(u => u.nome === nPessoa);
+                    let outro = usuarios.find(u => u.nome !== nPessoa);
+                    let minhaFatiaCasa = 0;
+
+                    if (regraDivisao === '5050') {
+                        minhaFatiaCasa = gCasaEx / 2;
+                    } else if (regraDivisao === 'proporcional') {
+                        let rendaTotal = eu.renda + outro.renda;
+                        let proporcao = rendaTotal > 0 ? (eu.renda / rendaTotal) : 0.5;
+                        minhaFatiaCasa = gCasaEx * proporcao;
+                    } else if (regraDivisao === 'solidariedade') {
+                        let meuLivre = eu.renda - meuGastoPessoal;
+                        let outroLivre = outro.renda - outroGastoPessoal;
+                        minhaFatiaCasa = (meuLivre - outroLivre + gCasaEx) / 2;
+                        
+                        // Travas matemáticas para ninguém pagar negativo ou mais do que a própria conta
+                        if (minhaFatiaCasa < 0) minhaFatiaCasa = 0;
+                        if (minhaFatiaCasa > gCasaEx) minhaFatiaCasa = gCasaEx;
+                    }
+                    gastoExistente = meuGastoPessoal + minhaFatiaCasa;
+                } else if (nPessoa !== "CASA" && usuarios.length === 1) {
+                    gastoExistente = meuGastoPessoal + gCasaEx;
+                }
+
+                let sLivreFuturo = renda - gastoExistente; 
+                let sComCompra = sLivreFuturo - vParcela; 
+                simMeses.push({ mesTexto: formatarMesAno(mAtual), saldoNormal: sLivreFuturo, saldoApos: sComCompra });
+            }
+
+            // 2️⃣ ANÁLISE DE DADOS (Acha o pior cenário)
+            let piorMes = simMeses.reduce((min, atual) => (atual.saldoApos < min.saldoApos) ? atual : min, simMeses[0]); 
+            let carousel = document.getElementById('simuladorCarousel'); 
+            carousel.innerHTML = ''; 
+            
+            let saldoImediato = simMeses[0].saldoApos; 
+            let txtSaldoImediato = saldoImediato >= 0 ? `<strong style="font-size: 1.2rem; color: var(--green);">${saldoImediato.toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong>` : `<strong style="font-size: 1.2rem; color: var(--red);">Saldo Devedor:  ${Math.abs(saldoImediato).toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong>`;
+            
+            carousel.innerHTML += `<div class="carousel-card"><h4 style="color: var(--primary); margin-bottom: 10px;">📉 Impacto Imediato</h4><p style="font-size: 0.95rem; color: var(--text);">A parcela de <strong>${vParcela.toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong> compromete <strong>${((vParcela/renda)*100).toFixed(0)}%</strong> da sua renda.</p><div style="margin-top: 15px; padding: 10px; background: rgba(92, 32, 146, 0.1); border-radius: 8px;"><span style="font-size: 0.85rem; color: var(--secondary-text);">Saldo após a primeira parcela:</span><br>${txtSaldoImediato}</div></div>`;
+            
+            let textoSaldoGargalo = piorMes.saldoApos >= 0 ? `o seu saldo livre cairá para <strong>${piorMes.saldoApos.toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong>.` : `vai faltar dinheiro! Você ficará <strong>devendo ${Math.abs(piorMes.saldoApos).toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong>.`;
+            carousel.innerHTML += `<div class="carousel-card"><h4 style="color: ${piorMes.saldoApos < 0 ? 'var(--red)' : '#f59e0b'}; margin-bottom: 10px;">⚠️ Mês Crítico</h4><p style="font-size: 0.95rem; color: var(--text);">O seu limite será testado em <strong>${piorMes.mesTexto}</strong>.</p><p style="font-size: 0.9rem; color: var(--secondary-text); margin-top: 10px;">Somando as dívidas da Casa, as suas Pessoais, e essa nova parcela, ${textoSaldoGargalo}</p></div>`;
+
+            let margemSeguranca = renda * 0.15; 
+            let isSafeNow = piorMes.saldoApos >= margemSeguranca;
+            
             if (!isSafeNow) {
-                let piorSaldoNormal = simMeses.reduce((min, m) => (m.saldoNormal < min) ? m.saldoNormal : min, renda); let maxParcelaSegura = piorSaldoNormal - margemSeguranca; let pIdeais = maxParcelaSegura > 0 ? Math.ceil(vTotal / maxParcelaSegura) : 999;
+                let piorSaldoNormal = simMeses.reduce((min, m) => (m.saldoNormal < min) ? m.saldoNormal : min, renda); 
+                let maxParcelaSegura = piorSaldoNormal - margemSeguranca; 
+                let pIdeais = maxParcelaSegura > 0 ? Math.ceil(vTotal / maxParcelaSegura) : 999;
                 let mesIdealParaComprar = null;
+                
+                // 3️⃣ ACHA UMA SOLUÇÃO (Adiar ou Parcelar mais)
                 for (let delay = 1; delay <= 24; delay++) {
                     let isSafe = true;
-                    for (let i = 0; i < par; i++) { let mAtual = new Date(dtBase.getFullYear(), dtBase.getMonth() + delay + i, 1); let m = mAtual.getMonth(); let a = mAtual.getFullYear(); let gastoEx = 0; transacoes.forEach(tx => { let [tA, tM] = tx.data.split('-').map(Number); if (tA === a && (tM - 1) === m && tx.tipo === 'despesa') { if (nPessoa === "CASA" || tx.categoria === `Pessoal - ${nPessoa}`) gastoEx += tx.valor; } }); if ((renda - gastoEx - vParcela) < margemSeguranca) { isSafe = false; break; } }
+                    for (let i = 0; i < par; i++) { 
+                        let mAtual = new Date(dtBase.getFullYear(), dtBase.getMonth() + delay + i, 1); 
+                        let m = mAtual.getMonth(); 
+                        let a = mAtual.getFullYear(); 
+                        let meuGEx = 0; 
+                        let outroGEx = 0; 
+                        let gCasaEx = 0;
+                        
+                        transacoes.forEach(tx => { 
+                            let [tA, tM] = tx.data.split('-').map(Number); 
+                            if (tA === a && (tM - 1) === m && tx.tipo === 'despesa') { 
+                                if (nPessoa === "CASA") { 
+                                    meuGEx += tx.valor; 
+                                } else { 
+                                    if (tx.categoria === `Pessoal - ${nPessoa}`) meuGEx += tx.valor; 
+                                    else if (tx.categoria.startsWith('Pessoal - ')) outroGEx += tx.valor;
+                                    else if (tx.categoria.startsWith('Casa')) gCasaEx += tx.valor; 
+                                } 
+                            } 
+                        }); 
+                        
+                        if (nPessoa !== "CASA" && usuarios.length >= 2) {
+                            let eu = usuarios.find(u => u.nome === nPessoa); 
+                            let outro = usuarios.find(u => u.nome !== nPessoa); 
+                            let minhaFatiaCasa = 0;
+                            
+                            if (regraDivisao === '5050') minhaFatiaCasa = gCasaEx / 2;
+                            else if (regraDivisao === 'proporcional') minhaFatiaCasa = gCasaEx * (eu.renda / (eu.renda + outro.renda));
+                            else if (regraDivisao === 'solidariedade') { 
+                                minhaFatiaCasa = ((eu.renda - meuGEx) - (outro.renda - outroGEx) + gCasaEx) / 2; 
+                                if (minhaFatiaCasa < 0) minhaFatiaCasa = 0; 
+                                if (minhaFatiaCasa > gCasaEx) minhaFatiaCasa = gCasaEx; 
+                            }
+                            meuGEx += minhaFatiaCasa;
+                        } else if (nPessoa !== "CASA" && usuarios.length === 1) { 
+                            meuGEx += gCasaEx; 
+                        }
+
+                        if ((renda - meuGEx - vParcela) < margemSeguranca) { isSafe = false; break; } 
+                    }
                     if (isSafe) { mesIdealParaComprar = formatarMesAno(new Date(dtBase.getFullYear(), dtBase.getMonth() + delay, 1)); break; }
                 }
+                
                 let achouSolucao = false;
-                if (pIdeais > par && pIdeais <= 72) { achouSolucao = true; carousel.innerHTML += `<div class="carousel-card"><h4 style="color: #3b82f6; margin-bottom: 10px;">💡 Opção 1: Reduzir a Parcela</h4><p style="font-size: 0.95rem; color: var(--text);">Para não sufocar, sua parcela máxima deveria ser de <strong>${maxParcelaSegura.toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong>.</p><div style="margin-top: 15px; padding: 10px; background: rgba(59, 130, 246, 0.1); border-radius: 8px;"><strong style="font-size: 1.1rem; color: #3b82f6;">Divida em ${pIdeais}x</strong><br><span style="font-size: 0.9rem; color: var(--text);">A parcela cai para ${(vTotal/pIdeais).toLocaleString("pt-BR", {style:"currency",currency:"BRL"})} e protege o seu "colchão" financeiro.</span></div></div>`; }
-                if (mesIdealParaComprar) { achouSolucao = true; carousel.innerHTML += `<div class="carousel-card"><h4 style="color: #8b5cf6; margin-bottom: 10px;">⏳ Opção 2: Adiar a Compra</h4><p style="font-size: 0.95rem; color: var(--text);">O Oráculo viu o futuro! Algumas das suas dívidas atuais vão acabar e liberar espaço na sua renda.</p><div style="margin-top: 15px; padding: 10px; background: rgba(139, 92, 246, 0.1); border-radius: 8px;"><strong style="font-size: 1.1rem; color: #8b5cf6;">Compre em ${mesIdealParaComprar}</strong><br><span style="font-size: 0.9rem; color: var(--text);">Se você esperar até lá, essa mesma parcela em ${par}x caberá perfeitamente na sua renda.</span></div></div>`; }
-                if (!achouSolucao) { carousel.innerHTML += `<div class="carousel-card"><h4 style="color: var(--red); margin-bottom: 10px;">🛑 Compra Inviável a Curto Prazo</h4><p style="font-size: 0.95rem; color: var(--text);">O sistema analisou os próximos 2 anos e não encontrou espaço seguro. Assumir isso agora te levará à falência. Aumente a renda ou quite dívidas antecipadamente.</p></div>`; }
-            } else { carousel.innerHTML += `<div class="carousel-card"><h4 style="color: var(--green); margin-bottom: 10px;">✅ Compra Aprovada</h4><p style="font-size: 0.95rem; color: var(--text);">Pode prosseguir! Mesmo no mês mais difícil, você ainda manterá intacta a sua margem de segurança para imprevistos.</p></div>`; }
-               
-              document.getElementById('simuladorForm').style.display = 'none'; 
+                if (pIdeais > par && pIdeais <= 72) { 
+                    achouSolucao = true; 
+                    carousel.innerHTML += `<div class="carousel-card"><h4 style="color: #3b82f6; margin-bottom: 10px;">💡 Opção 1: Reduzir a Parcela</h4><p style="font-size: 0.95rem; color: var(--text);">Para não sufocar, sua parcela máxima deveria ser de <strong>${maxParcelaSegura.toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong>.</p><div style="margin-top: 15px; padding: 10px; background: rgba(59, 130, 246, 0.1); border-radius: 8px;"><strong style="font-size: 1.1rem; color: #3b82f6;">Divida em ${pIdeais}x</strong><br><span style="font-size: 0.9rem; color: var(--text);">A parcela cai para ${(vTotal/pIdeais).toLocaleString("pt-BR", {style:"currency",currency:"BRL"})} e protege o seu "colchão" financeiro.</span></div></div>`; 
+                }
+                if (mesIdealParaComprar) { 
+                    achouSolucao = true; 
+                    carousel.innerHTML += `<div class="carousel-card"><h4 style="color: #8b5cf6; margin-bottom: 10px;">⏳ Opção 2: Adiar a Compra</h4><p style="font-size: 0.95rem; color: var(--text);">O Oráculo viu o futuro! Algumas das suas dívidas atuais vão acabar e liberar espaço na sua renda.</p><div style="margin-top: 15px; padding: 10px; background: rgba(139, 92, 246, 0.1); border-radius: 8px;"><strong style="font-size: 1.1rem; color: #8b5cf6;">Compre em ${mesIdealParaComprar}</strong><br><span style="font-size: 0.9rem; color: var(--text);">Se você esperar até lá, essa mesma parcela em ${par}x caberá perfeitamente na sua renda usando o modo de divisão escolhido.</span></div></div>`; 
+                }
+                if (!achouSolucao) { 
+                    carousel.innerHTML += `<div class="carousel-card"><h4 style="color: var(--red); margin-bottom: 10px;">🛑 Compra Inviável a Curto Prazo</h4><p style="font-size: 0.95rem; color: var(--text);">O sistema analisou os próximos 2 anos e não encontrou espaço seguro. Assumir isso agora te levará à falência.</p></div>`; 
+                }
+            } else { 
+                carousel.innerHTML += `<div class="carousel-card"><h4 style="color: var(--green); margin-bottom: 10px;">✅ Compra Aprovada</h4><p style="font-size: 0.95rem; color: var(--text);">Pode prosseguir! Mesmo com os seus gastos pessoais e a sua parte da casa, você ainda manterá uma boa margem para imprevistos.</p></div>`; 
+            }
+            
+            document.getElementById('simuladorForm').style.display = 'none'; 
             document.getElementById('simuladorResult').style.display = 'block'; 
             carousel.scrollLeft = 0; 
             setTimeout(atualizarSetas, 100);
-        } // 🛑 ESSA CHAVE FECHA O SIMULADOR (Ela estava no lugar errado antes!)
+        }
 
         // ==========================================
         // 🛠️ GESTOS INVISÍVEIS (SWIPE E PRESS)
@@ -2717,7 +2986,7 @@ body {
             } 
         });
 
-        // 🚀 SENSOR DE ARRASTAR GLOBAL (Livre e Sensível)
+        // 🚀 SENSOR DE ARRASTAR GLOBAL (Apenas Lançamentos e Divisão)
         let xDown = null;
         let yDown = null;
 
@@ -2729,6 +2998,13 @@ body {
         document.addEventListener('touchmove', (evt) => {
             if (!xDown || !yDown) return;
 
+            // 🛡️ TRAVA INTELIGENTE: Verifica em qual aba estamos
+            let abaLançamentosAtiva = document.getElementById('aba-caixa').classList.contains('active');
+            let abaDivisaoAtiva = document.getElementById('aba-divisao').classList.contains('active');
+            
+            // Se NÃO estiver em nenhuma dessas duas abas, ignora o dedo e para a função aqui!
+            if (!abaLançamentosAtiva && !abaDivisaoAtiva) return; 
+
             let xUp = evt.touches[0].clientX;
             let yUp = evt.touches[0].clientY;
             let xDiff = xDown - xUp;
@@ -2738,13 +3014,12 @@ body {
             if (Math.abs(xDiff) > Math.abs(yDiff)) {
                 // E for um arraste longo (> 60px)
                 if (Math.abs(xDiff) > 60) { 
-                    // Se algum modal estiver aberto (ex: Lançar), não muda o mês!
+                    // Se algum modal estiver aberto, não muda o mês
                     if (document.querySelector('.modal-overlay.active')) return;
 
-                    if (xDiff > 0) mudarMes(1);  // Deslizou para ESQUERDA (Avança o Mês)
-                    else mudarMes(-1);           // Deslizou para DIREITA (Volta o Mês)
+                    if (xDiff > 0) mudarMes(1);  // Deslizou para ESQUERDA (Avança)
+                    else mudarMes(-1);           // Deslizou para DIREITA (Volta)
                     
-                    // Reseta para não pular 2 meses de uma vez
                     xDown = null; 
                     yDown = null; 
                     if (navigator.vibrate) navigator.vibrate(10);
@@ -3123,6 +3398,21 @@ body {
         function fecharDetalhesDivisao() {
             document.getElementById('modalDetalhesDivisao').classList.remove('active');
         }
+        
+        function selecionarRegraSim(regra) {
+            // Esconde o ativo de todos
+            document.getElementById('btnDivSolidariedade').classList.remove('active');
+            document.getElementById('btnDivProporcional').classList.remove('active');
+            document.getElementById('btnDiv5050').classList.remove('active');
+            
+            // Ativa o clicado e salva o valor
+            if(regra === 'solidariedade') document.getElementById('btnDivSolidariedade').classList.add('active');
+            if(regra === 'proporcional') document.getElementById('btnDivProporcional').classList.add('active');
+            if(regra === '5050') document.getElementById('btnDiv5050').classList.add('active');
+            
+            document.getElementById('simRegraDivisao').value = regra;
+        }
+        
     </script>
     
     <button id="btnInstalar" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); padding:12px 24px; background:#22c55e; color:#fff; border:none; border-radius:12px; z-index:9999; font-weight:600; font-size: 1rem; box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4); cursor: pointer; align-items: center; gap: 8px;">
