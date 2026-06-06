@@ -2000,13 +2000,53 @@ body {
               document.getElementById('txDescricao').value = tx.descricao; 
               document.getElementById('txValor').value = tx.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); 
               
+              let boxFormaPag = document.getElementById('boxFormaPagamento');
               boxFormaPag.style.display = 'none';
+              
+              let selectPag = document.getElementById('txFormaPagamento');
               selectPag.value = "padrao";
               document.getElementById('labelDataCompra').innerText = "Data de Pagamento Original";
               document.getElementById('txData').value = tx.data; 
               
-              inputRep.value = "unica"; inputRep.disabled = true; botoes.forEach(b => { b.classList.remove('active'); b.classList.add('disabled'); }); botoes[0].classList.add('active'); toggleParcelas();
-              let catSelect = document.getElementById('txCategoria'); for(let i=0; i<catSelect.options.length; i++) { if(catSelect.options[i].value === tx.categoria) { catSelect.selectedIndex = i; break; } } 
+              // 🔍 INTELIGÊNCIA: Descobre qual era o tipo de repetição olhando pro banco de dados
+              let tipoRep = 'unica';
+              let btnIdx = 0;
+              let qtdParc = "";
+              
+              let matchParc = tx.descricao.match(/\(\d+\/(\d+)\)$/);
+              if (matchParc) {
+                  tipoRep = 'parcelada';
+                  btnIdx = 1;
+                  qtdParc = matchParc[1]; // Puxa o total de parcelas (ex: o 21 da sua Ebike)
+              } else if (tx.groupId) {
+                  let grp = transacoes.filter(t => t.groupId === tx.groupId);
+                  if (grp.length > 1) {
+                      tipoRep = 'fixa';
+                      btnIdx = 2;
+                  }
+              }
+
+              // Aplica o visual correto e mantém desabilitado para não quebrar a fatura
+              inputRep.value = tipoRep; 
+              inputRep.disabled = true; 
+              botoes.forEach(b => { b.classList.remove('active'); b.classList.add('disabled'); }); 
+              botoes[btnIdx].classList.add('active'); 
+              toggleParcelas();
+              
+              // Se for parcelada, preenche a quantidade e bloqueia
+              let inputParc = document.getElementById('txParcelas');
+              if (tipoRep === 'parcelada') {
+                  inputParc.value = qtdParc;
+                  inputParc.disabled = true;
+              } else {
+                  inputParc.value = "";
+                  inputParc.disabled = false;
+              }
+
+              let catSelect = document.getElementById('txCategoria'); 
+              for(let i=0; i<catSelect.options.length; i++) { 
+                  if(catSelect.options[i].value === tx.categoria) { catSelect.selectedIndex = i; break; } 
+              } 
           }
       }
         
